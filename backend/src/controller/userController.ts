@@ -1,0 +1,123 @@
+import { type Request,type Response } from 'express';
+import userService from '../services/userService.js';
+
+// Create user
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { email, password, name, phone, role } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email, password, and name are required',
+      });
+    }
+
+    const user = await userService.createUser({ email, password, name, phone, role });
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      data: user,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+// Get all users
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await userService.getAllUsers();
+
+    res.json({
+      success: true,
+      data: users,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+// Get user by ID
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if(!id){
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required',
+      });
+    }
+    const user = await userService.getUserById(id);
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+
+// Update user
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if(!id){
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required',
+      });
+    }
+    const { name, email, phone, password, role } = req.body;
+
+    const user = await userService.updateUser(id, { name, email, phone, password, role });
+
+    res.json({
+      success: true,
+      message: 'User updated successfully',
+      data: user,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+// Delete user
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if(!id){
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required',
+      });
+    }
+    const result = await userService.deleteUser(id);
+
+    res.json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
