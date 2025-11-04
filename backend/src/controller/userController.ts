@@ -1,8 +1,8 @@
 import { type Request,type Response } from 'express';
-import userService from '../services/userService.js';
+import { userService } from '../services/index.js';
 
 // Create user
-export const createUser = async (req: Request, res: Response) => {
+const createUser = async (req: Request, res: Response) => {
   try {
     const { email, password, name, phone, role } = req.body;
 
@@ -30,7 +30,7 @@ export const createUser = async (req: Request, res: Response) => {
 };
 
 // Get all users
-export const getAllUsers = async (req: Request, res: Response) => {
+const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await userService.getAllUsers();
 
@@ -47,7 +47,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 };
 
 // Get user by ID
-export const getUserById = async (req: Request, res: Response) => {
+const getUserById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     if(!id){
@@ -72,7 +72,7 @@ export const getUserById = async (req: Request, res: Response) => {
 
 
 // Update user
-export const updateUser = async (req: Request, res: Response) => {
+const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     if(!id){
@@ -99,7 +99,7 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 // Delete user
-export const deleteUser = async (req: Request, res: Response) => {
+const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     if(!id){
@@ -121,3 +121,11 @@ export const deleteUser = async (req: Request, res: Response) => {
     });
   }
 };
+
+export default {
+  createUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+}

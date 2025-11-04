@@ -1,8 +1,5 @@
-import 
-    createUser,
-    authenticateUser,
-    getUserById,
-    updateUser,
-} from './UserService.js';
+import userService from "./userService.js";
 
 export {
+    userService
+}
