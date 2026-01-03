@@ -3,6 +3,7 @@ import cors from 'cors';
 
 // Import routes
 import { userRouter } from './routes/index.js';
+import orderItemRoutes from './routes/orderItemRoutes.js';
 import { orderRouter } from './routes/index.js';
 import { paymentRouter } from './routes/index.js';
 
@@ -35,6 +36,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1', orderItemRoutes);
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/payments', paymentRouter);
 // TODO: Add more routes

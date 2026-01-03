@@ -25,6 +25,23 @@ User.hasMany(Order, {
   as: 'orders',
 });
 
+Order.hasMany(OrderItem, {
+  foreignKey: 'orderId',
+  as: 'orderItems',
+});
+
+OrderItem.belongsTo(Order, {
+  foreignKey: 'orderId',
+});
+
+Item.hasMany(OrderItem, {
+  foreignKey: 'itemId',
+});
+
+OrderItem.belongsTo(Item, {
+  foreignKey: 'itemId',
+});
+
 // Export all models
 export {
   User,
