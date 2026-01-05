@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import { userService } from '../service/index.js';
-import { generateToken } from '../middleware/auth.js';
+import { userService } from '../service/index';
+import { generateToken } from '../middleware/auth';
 
 // Sign up a new user
 const signUp = async (req: Request, res: Response, next: NextFunction) => {

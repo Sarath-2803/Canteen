@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import Payment from '../models/Payment.js';
-import Order from '../models/Order.js';
+import Payment from '../models/Payment';
+import Order from '../models/Order';
 
 // Process payment
 const processPayment = async (req: Request, res: Response) => {

@@ -1,8 +1,8 @@
-import User from "./User.js";
-import Item from "./Item.js";
-import Order from "./Order.js";
-import OrderItem from "./OrderItem.js";
-import Payment from "./Payment.js";
+import User from "./User";
+import Item from "./Item";
+import Order from "./Order";
+import OrderItem from "./OrderItem";
+import Payment from "./Payment";
 
 // Define associations
 Order.hasOne(Payment, {
@@ -25,6 +25,7 @@ User.hasMany(Order, {
   as: 'orders',
 });
 
+// OrderItem associations
 Order.hasMany(OrderItem, {
   foreignKey: 'orderId',
   as: 'orderItems',
@@ -32,14 +33,17 @@ Order.hasMany(OrderItem, {
 
 OrderItem.belongsTo(Order, {
   foreignKey: 'orderId',
+  as: 'order',
 });
 
 Item.hasMany(OrderItem, {
   foreignKey: 'itemId',
+  as: 'orderItems',
 });
 
 OrderItem.belongsTo(Item, {
   foreignKey: 'itemId',
+  as: 'item',
 });
 
 // Export all models

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Order from '../models/Order.js';
+import { Order } from '../models/index';
 
 // CREATE - Create new order
 const createOrder = async (req: Request, res: Response) => {
@@ -17,7 +17,6 @@ const createOrder = async (req: Request, res: Response) => {
       userId,
       totalAmount,
       status: 'pending',
-      items: items || [],
     });
 
     res.status(201).json({

@@ -1,69 +1,103 @@
-import { Request, Response, NextFunction } from 'express';
-import { OrderItemService } from '../service/orderItemService.js';
+import { Request, Response } from 'express';
+import { orderItemService } from '../service/index';
 
-export class OrderItemController {
-
-  static async addItem(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { orderId } = req.params;
-      const { itemId, quantity } = req.body;
-
-      const result = await OrderItemService.addItem(
-        orderId,
-        itemId,
-        quantity
-      );
-
-      res.status(201).json(result);
-    } catch (error) {
-      next(error);
-    }
+const createOrderItem = async (req: Request, res: Response) => {
+  try {
+    const orderItem = await orderItemService.createOrderItem(req.body);
+    res.status(201).json({
+      success: true,
+      data: orderItem,
+      message: 'Order item created successfully',
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
+};
 
-  static async getItems(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { orderId } = req.params;
-      const result = await OrderItemService.getItemsByOrder(orderId);
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
+const getAllOrderItems = async (_req: Request, res: Response) => {
+  try {
+    const orderItems = await orderItemService.getAllOrderItems();
+    res.json({
+      success: true,
+      data: orderItems,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
+};
 
-  static async updateItem(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      const { quantity, price } = req.body;
-
-      const result = await OrderItemService.updateItem(
-        id,
-        quantity,
-        price
-      );
-
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
+const getOrderItemById = async (req: Request, res: Response) => {
+  try {
+    const orderItem = await orderItemService.getOrderItemById(req.params.id);
+    res.json({
+      success: true,
+      data: orderItem,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
   }
+};
 
-  static async deleteItem(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      await OrderItemService.deleteItem(id);
-      res.status(204).send();
-    } catch (error) {
-      next(error);
-    }
+const getOrderItemsByOrderId = async (req: Request, res: Response) => {
+  try {
+    const orderItems = await orderItemService.getOrderItemsByOrderId(req.params.orderId);
+    res.json({
+      success: true,
+      data: orderItems,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
   }
+};
 
-  static async clearOrder(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { orderId } = req.params;
-      await OrderItemService.clearOrder(orderId);
-      res.status(204).send();
-    } catch (error) {
-      next(error);
-    }
+const updateOrderItem = async (req: Request, res: Response) => {
+  try {
+    const orderItem = await orderItemService.updateOrderItem(req.params.id, req.body);
+    res.json({
+      success: true,
+      data: orderItem,
+      message: 'Order item updated successfully',
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
   }
-}
+};
+
+const deleteOrderItem = async (req: Request, res: Response) => {
+  try {
+    await orderItemService.deleteOrderItem(req.params.id);
+    res.json({
+      success: true,
+      message: 'Order item deleted successfully',
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export default {
+  createOrderItem,
+  getAllOrderItems,
+  getOrderItemById,
+  getOrderItemsByOrderId,
+  updateOrderItem,
+  deleteOrderItem,
+};

@@ -1,9 +1,13 @@
-import userRouter from "./userRoutes.js";
-import orderRouter from "./orderRoutes.js";
-import paymentRouter from "./paymentRoutes.js";
+import userRouter from './userRoutes';
+import itemRoutes from './itemRoutes';
+import orderRouter from './orderRoutes';
+import paymentRouter from './paymentRoutes';
+import orderItemRoutes from './orderItemRoutes';
 
 export {
-    userRouter,
-    orderRouter,
-    paymentRouter
+  userRouter,
+  itemRoutes,
+  orderRouter,
+  paymentRouter,
+  orderItemRoutes
 };

@@ -1,4 +1,4 @@
-import { User } from "../models/index.js";
+import { User } from "../models/index";
 import bcrypt from "bcrypt";
 
 // Remove password from user object

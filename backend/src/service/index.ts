@@ -1,5 +1,9 @@
-import userService from "./userService.js";
+import itemService from './itemService';
+import userService from './userService';
+import orderItemService from './orderItemService';
 
 export {
-    userService
+  itemService,
+  userService,
+  orderItemService,
 };

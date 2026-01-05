@@ -1,134 +1,139 @@
-import sequelize from '../config/database.js';
-import OrderItem from '../models/OrderItem.js';
-import Item from '../models/Item.js';
-import { recalculateOrderTotal } from '../utils/recalculateOrderTotal.js';
+import { OrderItem, Order, Item } from '../models';
+import { OrderItemCreationAttributes, OrderItemAttributes } from '../models/OrderItem';
 
-export class OrderItemService {
-
-  // ADD ITEM TO ORDER
-  static async addItem(orderId: string, itemId: string, quantity: number) {
-    return sequelize.transaction(async (t) => {
-
-      if (quantity <= 0) {
-        throw new Error('Quantity must be greater than zero');
-      }
-
-      const item = await Item.findByPk(itemId, { transaction: t });
-      if (!item) throw new Error('Item not found');
-
-      const price = Number(item.price);
-
-      const existingItem = await OrderItem.findOne({
-        where: { orderId, itemId },
-        transaction: t,
-      });
-
-      let orderItem;
-
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + quantity;
-        const subTotal = newQuantity * price;
-
-        orderItem = await existingItem.update(
-          {
-            quantity: newQuantity,
-            price,
-            subTotal,
-          },
-          { transaction: t }
-        );
-      } else {
-        orderItem = await OrderItem.create(
-          {
-            orderId,
-            itemId,
-            quantity,
-            price,
-            subTotal: price * quantity,
-          },
-          { transaction: t }
-        );
-      }
-
-      await recalculateOrderTotal(orderId, t);
-      return orderItem;
-    });
+// Create a new order item with calculated subTotal
+const createOrderItem = async (data: OrderItemCreationAttributes): Promise<OrderItem> => {
+  try {
+    // Calculate subTotal if not provided
+    const subTotal = (data.price as number) * (data.quantity as number);
+    
+    const orderItem = await OrderItem.create({
+      ...data,
+      subTotal,
+    } as OrderItemCreationAttributes);
+    
+    return orderItem;
+  } catch (error: any) {
+    throw new Error(`Failed to create order item: ${error.message}`);
   }
+};
 
-  // GET ALL ITEMS OF AN ORDER
-  static async getItemsByOrder(orderId: string) {
-    return OrderItem.findAll({
-      where: { orderId },
-      include: ['Item'],
-    });
-  }
-
-  // UPDATE ORDER ITEM
-  static async updateItem(
-    orderItemId: string,
-    quantity: number,
-    price?: number
-  ) {
-    return sequelize.transaction(async (t) => {
-
-      const orderItem = await OrderItem.findByPk(orderItemId, {
-        transaction: t,
-      });
-
-      if (!orderItem) {
-        throw new Error('Order item not found');
-      }
-
-      if (quantity <= 0) {
-        throw new Error('Quantity must be greater than zero');
-      }
-
-      const finalPrice = price ?? Number(orderItem.price);
-      const subTotal = finalPrice * quantity;
-
-      await orderItem.update(
+// Get all order items
+const getAllOrderItems = async (): Promise<OrderItem[]> => {
+  try {
+    const orderItems = await OrderItem.findAll({
+      include: [
         {
-          quantity,
-          price: finalPrice,
-          subTotal,
+          model: Order,
+          as: 'order',
+          attributes: ['id', 'status', 'totalAmount'],
         },
-        { transaction: t }
-      );
-
-      await recalculateOrderTotal(orderItem.orderId, t);
-      return orderItem;
+        {
+          model: Item,
+          as: 'item',
+          attributes: ['id', 'name', 'price', 'imageUrl'],
+        },
+      ],
     });
+    
+    return orderItems;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch order items: ${error.message}`);
   }
+};
 
-  // DELETE SINGLE ORDER ITEM
-  static async deleteItem(orderItemId: string) {
-    return sequelize.transaction(async (t) => {
-
-      const orderItem = await OrderItem.findByPk(orderItemId, {
-        transaction: t,
-      });
-
-      if (!orderItem) {
-        throw new Error('Order item not found');
-      }
-
-      const orderId = orderItem.orderId;
-      await orderItem.destroy({ transaction: t });
-
-      await recalculateOrderTotal(orderId, t);
+// Get order item by ID
+const getOrderItemById = async (id: string): Promise<OrderItem | null> => {
+  try {
+    const orderItem = await OrderItem.findByPk(id, {
+      include: [
+        {
+          model: Order,
+          as: 'order',
+          attributes: ['id', 'status', 'totalAmount'],
+        },
+        {
+          model: Item,
+          as: 'item',
+          attributes: ['id', 'name', 'price', 'imageUrl'],
+        },
+      ],
     });
+    
+    if (!orderItem) {
+      throw new Error('Order item not found');
+    }
+    
+    return orderItem;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch order item: ${error.message}`);
   }
+};
 
-  // CLEAR ALL ITEMS FROM ORDER
-  static async clearOrder(orderId: string) {
-    return sequelize.transaction(async (t) => {
-
-      await OrderItem.destroy({
-        where: { orderId },
-        transaction: t,
-      });
-
-      await recalculateOrderTotal(orderId, t);
+// Get order items by order ID
+const getOrderItemsByOrderId = async (orderId: string): Promise<OrderItem[]> => {
+  try {
+    const orderItems = await OrderItem.findAll({
+      where: { orderId },
+      include: [
+        {
+          model: Item,
+          as: 'item',
+          attributes: ['id', 'name', 'price', 'imageUrl'],
+        },
+      ],
     });
+    
+    return orderItems;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch order items for order: ${error.message}`);
   }
-}
+};
+
+// Update order item with recalculated subTotal
+const updateOrderItem = async (id: string, data: Partial<OrderItemAttributes>): Promise<OrderItem> => {
+  try {
+    const orderItem = await OrderItem.findByPk(id);
+    
+    if (!orderItem) {
+      throw new Error('Order item not found');
+    }
+    
+    // Recalculate subTotal if quantity or price is updated
+    const updatedData = { ...data };
+    const price = data.price ?? orderItem.price;
+    const quantity = data.quantity ?? orderItem.quantity;
+    
+    updatedData.subTotal = price * quantity;
+    
+    await orderItem.update(updatedData);
+    
+    return orderItem;
+  } catch (error: any) {
+    throw new Error(`Failed to update order item: ${error.message}`);
+  }
+};
+
+// Delete order item
+const deleteOrderItem = async (id: string): Promise<void> => {
+  try {
+    const orderItem = await OrderItem.findByPk(id);
+    
+    if (!orderItem) {
+      throw new Error('Order item not found');
+    }
+    
+    await orderItem.destroy();
+  } catch (error: any) {
+    throw new Error(`Failed to delete order item: ${error.message}`);
+  }
+};
+
+export default {
+  createOrderItem,
+  getAllOrderItems, 
+  getOrderItemById,
+  getOrderItemsByOrderId,
+  updateOrderItem,
+  deleteOrderItem,
+};
