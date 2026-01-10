@@ -1,0 +1,136 @@
+"use client";
+
+import Header from "@/components/Header";
+import Link from "next/link";
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const { login } = useAuth();
+  const router = useRouter();
+  const [error, setError] = useState("");
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"Customer" | "Admin">("Customer");
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const usersStr = localStorage.getItem("users");
+    if (!usersStr) {
+      setError("No accounts found. Please sign up.");
+      return;
+    }
+
+    const users: {
+      name: string;
+      email: string;
+      password: string;
+      role: "Customer" | "Admin";
+    }[] = JSON.parse(usersStr);
+
+    const matchedUser = users.find((u) => u.email === email);
+
+    if (!matchedUser) {
+      setError("No accounts found. Please sign up.");
+      return;
+    }
+
+    if (matchedUser.password !== password) {
+      setError("Incorrect password");
+      return;
+    }
+
+    login(matchedUser);
+
+    // Redirect to the page came from
+    const previous = sessionStorage.getItem("redirectAfterLogin");
+    router.push(previous || "/");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* LEFT FORM */}
+          <div className="bg-white shadow-lg rounded-2xl p-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+              Welcome Back
+            </h1>
+
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div>
+                <select
+                  value={role}
+                  onChange={(e) =>
+                    setRole(e.target.value as "Customer" | "Admin")
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-700"
+                >
+                  <option value="Customer">Customer</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-green-500 text-white font-semibold py-2 rounded-lg hover:bg-green-600 transition-colors"
+              >
+                Login
+              </button>
+            </form>
+
+            <p className="text-sm text-gray-600 mt-4 text-center">
+              Don’t have an account?{" "}
+              <Link
+                href="/signup"
+                className="text-green-600 font-medium hover:underline"
+              >
+                Sign Up
+              </Link>
+            </p>
+          </div>
+
+          <div className="hidden lg:flex items-center justify-center">
+            <div className="w-full h-96 bg-gray-200 rounded-2xl flex items-center justify-center text-gray-500">
+              We'll add something interesting here, like some animation -
+              something interactive and engaging
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
