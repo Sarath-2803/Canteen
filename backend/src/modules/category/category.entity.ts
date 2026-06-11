@@ -27,7 +27,6 @@ Category.init(
         sequelize,
         tableName: 'categories',
         timestamps: true,
-        underscored: true,
     }
 )
 

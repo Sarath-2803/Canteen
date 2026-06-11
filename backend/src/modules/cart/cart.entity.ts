@@ -23,7 +23,6 @@ Cart.init(
         sequelize,
         tableName: 'carts',
         timestamps: true,
-        underscored: true,
     }
 );
     

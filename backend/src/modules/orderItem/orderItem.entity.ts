@@ -41,7 +41,6 @@ OrderItem.init({
     sequelize,
     modelName: "order_items",
     timestamps: true,
-    underscored: true
 });
 
 export default OrderItem;

@@ -38,7 +38,6 @@ Order.init({
     sequelize,
     modelName: "orders",
     timestamps: true,
-    underscored: true
 });
 
 export default Order;

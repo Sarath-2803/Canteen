@@ -60,7 +60,6 @@ Item.init(
     sequelize,
     tableName: 'items',
     timestamps: true,
-    underscored: true,
   }
 );
 

@@ -50,7 +50,6 @@ Payment.init({
     sequelize,
     modelName: "payments",
     timestamps: true,
-    underscored: true,
 });
 
 export default Payment;
