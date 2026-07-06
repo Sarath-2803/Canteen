@@ -79,7 +79,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (userId) {
       refreshCart();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
 

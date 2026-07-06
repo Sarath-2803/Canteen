@@ -9,7 +9,7 @@ export default function CartPage() {
 	const { cart, removeFromCart, clearCart } = useCart();
 
 	// Calculate total price directly
-	const totalPrice = cart.reduce((sum, cartItem) => sum + (cartItem.item.price * cartItem.quantity), 0);
+	const totalPrice = cart.reduce((sum, cartItem) => sum + ((cartItem.item?.price ?? 0) * cartItem.quantity), 0);
 
 	if (cart.length === 0) {
 		return (

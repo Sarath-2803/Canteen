@@ -25,8 +25,6 @@ export default function CheckoutPage() {
 	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 	const [cartLoading, setCartLoading] = useState(true);
 
-	// Refresh cart when component mounts to ensure we have latest data
-	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
 		const loadCart = async () => {
 			try {
@@ -85,10 +83,11 @@ export default function CheckoutPage() {
 		}
 
 		const userid : string = user.id!;
+		const backendPaymentMethod = paymentMethod === "card" ? "CREDIT_CARD" : "UPI";
 
 		try {
 			// Create order from cart items in backend
-			const order = await checkout(userid);
+			const order = await checkout(userid, backendPaymentMethod);
 
 			if (!order) {
 				throw new Error("Failed to create order");
@@ -181,8 +180,8 @@ export default function CheckoutPage() {
 									key={idx}
 									className="flex justify-between text-gray-700"
 								>
-									<span>{item.item.name}</span>
-									<span>₹{item.item.price}</span>
+										<span>{item.item?.name  || 'Item'}</span>
+										<span>₹{item.item?.price ?? item.item.price ?? 0}</span>
 								</div>
 							))}
 						</div>

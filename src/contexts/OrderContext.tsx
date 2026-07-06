@@ -27,7 +27,7 @@ interface OrderContextType {
 	currentOrderItems: CartItem[]; // Cart items as current order
 	currentOrderTotal: number; // Total amount of current order
 	loading: boolean;
-	checkout: (userId: string) => Promise<Order>; // Checkout from cart
+	checkout: (userId: string, paymentMethod: string) => Promise<Order>; // Checkout from cart
 	addOrder: (userId: string, items: OrderItem[], totalAmount: number) => Promise<Order>;
 	updateOrderStatus: (orderId: string, status: Order["status"]) => Promise<void>;
 	cancelOrder: (orderId: string) => Promise<void>;
@@ -41,14 +41,14 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 export function OrderProvider({ children }: { children: React.ReactNode }) {
 	const [orders, setOrders] = useState<Order[]>([]);
 	const [loading, setLoading] = useState(false);
-	const { cart } = useCart();
+	const { cart, clearCart } = useCart();
 
 	// Current order items from cart
 	const currentOrderItems = cart;
 	
 	// Calculate total amount from cart items
 	const currentOrderTotal = cart.reduce((sum, cartItem) => {
-		return sum + (cartItem.item.price * cartItem.quantity);
+		return sum + ((cartItem.item?.price ?? 0) * cartItem.quantity);
 	}, 0);
 
 	const { user, token } = useAuth();
@@ -58,7 +58,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 		if (token && user) {
 			refreshOrders();
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [token, user]);
 
 	const refreshOrders = async () => {
@@ -71,10 +70,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 		try {
 			setLoading(true);
 			// Fetch orders for the current user only
-			const response = await ordersApi.getByUserId(user.id!);
+			// console.log('Fetching orders for user:', user.userId);
+			const response = await ordersApi.getByUserId(user.userId);
 			if (response.success) {
 				// Ensure each order has an items array
-				const ordersWithItems = response.data.map((order: Order) => ({
+				const ordersWithItems = response.data.map((order: any) => ({
 					...order,
 					items: order.items || []
 				}));
@@ -89,10 +89,10 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	// Checkout function - creates order from cart
-	const checkout = async (userId: string): Promise<Order> => {
+	const checkout = async (userId: string, paymentMethod: string): Promise<Order> => {
 		try {
 			setLoading(true);
-			const response = await ordersApi.checkout(userId);
+			const response = await ordersApi.checkout(userId, paymentMethod);
 			if (response.success) {
 				const newOrder = {
 					...response.data,
@@ -113,8 +113,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
 	const addOrder = async (userId: string, items: OrderItem[], totalAmount: number): Promise<Order> => {
 		try {
-			const formattedItems = items.map(item => ({ id: String(item.id), quantity: item.quantity }));
-			const response = await ordersApi.create(userId, totalAmount, formattedItems);
+			const response = await ordersApi.create(userId, totalAmount, items);
 			if (response.success) {
 				const newOrder = {
 					...response.data,

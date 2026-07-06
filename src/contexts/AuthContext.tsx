@@ -28,7 +28,7 @@ const isTokenExpired = (token: string): boolean => {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const exp = payload.exp * 1000; // Convert to milliseconds
     return Date.now() >= exp;
-  } catch {
+  } catch (error) {
     return true; // If token is invalid, consider it expired
   }
 };
@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   // Check token expiration - optimized approach
@@ -113,12 +112,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       return () => clearInterval(intervalId);
-    } catch {
+    } catch (error) {
       // Fallback: check every 60 seconds if token parsing fails
       const intervalId = setInterval(checkTokenExpiration, 60000);
       return () => clearInterval(intervalId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const login = (userData: User, jwtToken?: string) => {

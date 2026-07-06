@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,9 @@ import { itemsApi } from "@/lib/api";
 export interface itemType {
   id: string;
   name: string;
+  description: string;
   price: number;
+  categoryId: string;
   imageUrl: string;
   available: boolean;
   createdAt?: Date;
@@ -66,6 +68,7 @@ export default function Home() {
 	const [loading, setLoading] = useState(true);
 	const [quantities, setQuantities] = useState<Record<string, number>>({});
 	const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
+	const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
 	// Redirect admin users to their dashboard
 	useEffect(() => {
@@ -79,10 +82,12 @@ export default function Home() {
 			try {
 				const data = await itemsApi.getAll();
 				setMenuItems(data);
+
+				console.log("Fetched menu items:", data);
 				
 				// Initialize quantities to 1 for all available items
 				const initialQuantities: Record<string, number> = {};
-				data.forEach((item: itemType) => {
+				data.rows.forEach((item: itemType) => {
 					if (item.available) {
 						initialQuantities[item.id] = 1;
 					}
@@ -118,14 +123,15 @@ export default function Home() {
 		try {
 			// Get userId from localStorage
 			const userString = localStorage.getItem("user");
+			console.log("User from localStorage:", userString);
 			if (!userString) {
 				router.push("/login");
 				return;
 			}
 			const user = JSON.parse(userString);
 
-			// Call addToCart with correct parameters
-			await addToCart(user.id, item.id, quantity);
+			// Call addToCart with the authenticated user id
+			await addToCart(user.id ?? user.userId, item.id, quantity);
 
 			// Reset quantity and show success feedback
 			setQuantities((prev) => ({ ...prev, [item.id]: 0 }));
