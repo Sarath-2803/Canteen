@@ -19,6 +19,10 @@ const runMigrations = async () => {
         if (stdout) console.log(stdout);
         if (stderr) console.error(stderr);
         console.log('✅ Migrations completed.');
+        const { stdout: seedStdout, stderr: seedStderr } = await execPromise(`npx sequelize-cli db:seed:all --env ${env}`);
+        if (seedStdout) console.log(seedStdout);
+        if (seedStderr) console.error(seedStderr);
+        console.log('✅ Seeding completed.');
     } catch (error) {
         console.error('❌ Migration error:', error);
         throw error;
