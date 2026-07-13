@@ -66,32 +66,32 @@ const normalizeOrderItem = (orderItem: { orderItemId?: string; id?: string; item
   };
 };
 
-const normalizeOrder = (order: { orderId?: string; id?: string; userId?: string; totalAmount?: number; placedAt?: Date; createdAt?: Date; updatedAt?: Date; status?: string }, itemsById: Map<string, { id: string }>, orderItems: { orderItemId?: string; id?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number; unitPrice?: number; price?: number; subtotal?: number; orderId?: string }[] = []) => ({
-  id: order.orderId ?? order.id,
-  orderId: order.orderId ?? order.id,
-  userId: order.userId,
-  totalAmount: Number(order.totalAmount),
-  placedAt: order.placedAt ?? order.createdAt,
-  createdAt: order.createdAt,
-  updatedAt: order.updatedAt,
-  status: normalizeOrderStatus(order.status),
-  items: orderItems.map((orderItem) => normalizeOrderItem(orderItem, itemsById)),
-});
+// const normalizeOrder = (order: { orderId?: string; id?: string; userId?: string; totalAmount?: number; placedAt?: Date; createdAt?: Date; updatedAt?: Date; status?: string }, itemsById: Map<string, { id: string }>, orderItems: { orderItemId?: string; id?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number; unitPrice?: number; price?: number; subtotal?: number; orderId?: string }[] = []) => ({
+//   id: order.orderId ?? order.id,
+//   orderId: order.orderId ?? order.id,
+//   userId: order.userId,
+//   totalAmount: Number(order.totalAmount),
+//   placedAt: order.placedAt ?? order.createdAt,
+//   createdAt: order.createdAt,
+//   updatedAt: order.updatedAt,
+//   status: normalizeOrderStatus(order.status),
+//   items: orderItems.map((orderItem) => normalizeOrderItem(orderItem, itemsById)),
+// });
 
-const normalizeCartItem = (cartItem: { cartItemId?: string; cartId?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number }, userId: string, itemsById: Map<string, { id: string }>) => {
-  const itemId = cartItem.itemId ?? cartItem.item?.itemId ?? cartItem.item?.id;
-  const itemRecord = cartItem.item ?? (itemId ? itemsById.get(itemId) : undefined);
+// const normalizeCartItem = (cartItem: { cartItemId?: string; cartId?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number }, userId: string, itemsById: Map<string, { id: string }>) => {
+//   const itemId = cartItem.itemId ?? cartItem.item?.itemId ?? cartItem.item?.id;
+//   const itemRecord = cartItem.item ?? (itemId ? itemsById.get(itemId) : undefined);
 
-  return {
-    id: cartItem.cartItemId ,
-    cartItemId: cartItem.cartItemId ,
-    cartId: cartItem.cartId,
-    userId,
-    itemId,
-    quantity: Number(cartItem.quantity),
-    item: itemRecord ? normalizeItem(itemRecord) : undefined,
-  };
-};
+//   return {
+//     id: cartItem.cartItemId ,
+//     cartItemId: cartItem.cartItemId ,
+//     cartId: cartItem.cartId,
+//     userId,
+//     itemId,
+//     quantity: Number(cartItem.quantity),
+//     item: itemRecord ? normalizeItem(itemRecord) : undefined,
+//   };
+// };
 
 // Helper function to handle API calls with token validation
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {

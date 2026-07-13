@@ -136,3 +136,11 @@ export interface UpiProvider {
   name: string;
   suffix: string;
 }
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  price: number;
+  available: boolean;
+  imageUrl?: string;
+}
