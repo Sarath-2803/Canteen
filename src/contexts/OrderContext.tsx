@@ -56,14 +56,15 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 			// Fetch orders for the current user only
 			// console.log('Fetching orders for user:', user.userId);
 			const response = await ordersApi.getByUserId(user.id as string);
-			if (response.success) {
-				// Ensure each order has an items array
-				const ordersWithItems = response.data.map((order: { items?: OrderItem[] }) => ({
-					...order,
-					items: order.items || []
-				}));
-				setOrders(ordersWithItems);
-			}
+			// if (response.data) {
+			// 	// Ensure each order has an items array
+			// 	const ordersWithItems = response.data.map((order: { items?: OrderItem[] }) => ({
+			// 		...order,
+			// 		items: order.items || []
+			// 	}));
+			// 	setOrders(ordersWithItems);
+			// }
+			console.log('Orders fetched:', response.data);
 		} catch (error) {
 			console.error("Failed to load orders:", error);
 			// Don't throw error to prevent breaking the UI

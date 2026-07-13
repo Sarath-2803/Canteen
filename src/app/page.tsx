@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header"; 
 import { useState, useEffect } from "react";
 import { itemsApi } from "@/lib/api";
-import { MenuItem } from "@/lib/types";
+import { Item, MenuItem } from "@/lib/types";
 
 
 export default function Home() {
@@ -37,7 +37,7 @@ export default function Home() {
 				
 				// Initialize quantities to 1 for all available items
 				const initialQuantities: Record<string, number> = {};
-				data.rows.forEach((item: itemType) => {
+				data.forEach((item: Item) => {
 					if (item.available) {
 						initialQuantities[item.id] = 1;
 					}
@@ -67,7 +67,7 @@ export default function Home() {
 		});
 	};
 
-	const handleAddToCart = async (item: itemType) => {
+	const handleAddToCart = async (item: Item) => {
 		const quantity = quantities[item.id] || 1;
 
 		try {
@@ -138,7 +138,7 @@ export default function Home() {
 					</div>
 				) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-					{menuItems.map((item: itemType) => {
+					{menuItems.map((item: Item) => {
 						const quantity = quantities[item.id] || 0;
 						const isAdded = addedItems[item.id];
 
