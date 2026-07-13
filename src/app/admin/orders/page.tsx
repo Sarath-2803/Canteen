@@ -355,3 +355,12 @@
 //     </div>
 //   );
 // }
+
+
+export default function AdminOrdersPage() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-lg text-gray-800">Admin Orders Page</div>
+    </div>
+  );
+}
