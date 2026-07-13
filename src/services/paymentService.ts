@@ -1,19 +1,4 @@
-export interface PaymentDetails {
-	cardNumber: string;
-	expiryDate: string;
-	cvv: string;
-	cardholder: string;
-}
-
-export interface UpiDetails {
-	upiId: string;
-}
-
-export interface PaymentResponse {
-	success: boolean;
-	transactionId?: string;
-	message: string;
-}
+import { PaymentDetails, UpiDetails, PaymentResponse } from "@/lib/types";
 
 // Validate card number using Luhn algorithm
 function validateCardNumber(cardNumber: string): boolean {

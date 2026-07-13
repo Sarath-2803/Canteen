@@ -7,30 +7,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header"; 
 import { useState, useEffect } from "react";
 import { itemsApi } from "@/lib/api";
-
-// Define the Item type based on your backend model
-export interface itemType {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  categoryId: string;
-  imageUrl: string;
-  available: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { MenuItem } from "@/lib/types";
 
 
 export default function Home() {
 	const router = useRouter();
 	const { addToCart, cart } = useCart();
 	const { user, loading: authLoading } = useAuth();
-	const [menuItems, setMenuItems] = useState<itemType[]>([]);
+	const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [quantities, setQuantities] = useState<Record<string, number>>({});
 	const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
-	const [selectedCategory, setSelectedCategory] = useState<string>("All");
+	// const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
 	// Redirect admin users to their dashboard
 	useEffect(() => {

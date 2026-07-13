@@ -2,14 +2,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { itemsApi } from "@/lib/api";
-
-type InventoryItem = {
-  id: string;
-  name: string;
-  price: number;
-  available: boolean;
-  imageUrl?: string;
-};
+import { InventoryItem } from "@/lib/types";
 
 export default function AdminInventoryPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);

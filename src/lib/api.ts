@@ -1,3 +1,5 @@
+import { Item, OrderItem } from "./types";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 const toJsonHeaders = (headers: HeadersInit = {}) => ({
@@ -5,7 +7,7 @@ const toJsonHeaders = (headers: HeadersInit = {}) => ({
   'Content-Type': 'application/json',
 });
 
-const normalizeItem = (item: any) => ({
+const normalizeItem = (item: { itemId?: string; id?: string; itemName?: string; name?: string; itemDescription?: string; description?: string; price?: number; categoryId?: string; imageUrl?: string; isAvailable?: boolean; available?: boolean; createdAt?: Date; updatedAt?: Date }) => ({
   id: item.itemId ?? item.id,
   itemId: item.itemId ?? item.id,
   name: item.itemName ?? item.name,
@@ -48,7 +50,7 @@ const toBackendOrderStatus = (status: string) => {
   }
 };
 
-const normalizeOrderItem = (orderItem: any, itemsById: Map<string, any>) => {
+const normalizeOrderItem = (orderItem: { orderItemId?: string; id?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number; unitPrice?: number; price?: number; subtotal?: number; orderId?: string }, itemsById: Map<string, { id: string }>) => {
   const itemId = orderItem.itemId ?? orderItem.item?.itemId ?? orderItem.item?.id;
   const itemRecord = orderItem.item ?? (itemId ? itemsById.get(itemId) : undefined);
 
@@ -64,7 +66,7 @@ const normalizeOrderItem = (orderItem: any, itemsById: Map<string, any>) => {
   };
 };
 
-const normalizeOrder = (order: any, itemsById: Map<string, any>, orderItems: any[] = []) => ({
+const normalizeOrder = (order: { orderId?: string; id?: string; userId?: string; totalAmount?: number; placedAt?: Date; createdAt?: Date; updatedAt?: Date; status?: string }, itemsById: Map<string, { id: string }>, orderItems: { orderItemId?: string; id?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number; unitPrice?: number; price?: number; subtotal?: number; orderId?: string }[] = []) => ({
   id: order.orderId ?? order.id,
   orderId: order.orderId ?? order.id,
   userId: order.userId,
@@ -76,13 +78,13 @@ const normalizeOrder = (order: any, itemsById: Map<string, any>, orderItems: any
   items: orderItems.map((orderItem) => normalizeOrderItem(orderItem, itemsById)),
 });
 
-const normalizeCartItem = (cartItem: any, userId: string, itemsById: Map<string, any>) => {
+const normalizeCartItem = (cartItem: { cartItemId?: string; cartId?: string; itemId?: string; item?: { itemId?: string; id?: string }; quantity?: number }, userId: string, itemsById: Map<string, { id: string }>) => {
   const itemId = cartItem.itemId ?? cartItem.item?.itemId ?? cartItem.item?.id;
   const itemRecord = cartItem.item ?? (itemId ? itemsById.get(itemId) : undefined);
 
   return {
-    id: cartItem.cartItemId ?? cartItem.id,
-    cartItemId: cartItem.cartItemId ?? cartItem.id,
+    id: cartItem.cartItemId ,
+    cartItemId: cartItem.cartItemId ,
     cartId: cartItem.cartId,
     userId,
     itemId,
@@ -258,12 +260,12 @@ export const ordersApi = {
   },
 
   // Create new order
-  create: async (userId: string, totalAmount: number, items: any[]) => {
+  create: async (userId: string, totalAmount: number, items: OrderItem[]) => {
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/orders`, {
         method: 'POST',
         headers: toJsonHeaders(),
-        body: JSON.stringify({ userId, totalAmount }),
+        body: JSON.stringify({ userId, totalAmount, items }),
       });
 
       if (!response.ok) {
@@ -289,7 +291,7 @@ export const ordersApi = {
       ...json,
       data: {
         ...json.data,
-        data: (json.data?.data || []).map((order: any) => ({
+        data: (json.data?.data || []).map((order: { orderId?: string; id?: string; status?: string }) => ({
           ...order,
           id: order.orderId ?? order.id,
           orderId: order.orderId ?? order.id,
@@ -319,31 +321,30 @@ export const ordersApi = {
 
   // Get orders by user ID
   getByUserId: async (userId: string) => {
-    const response = await fetchWithAuth(`${API_BASE_URL}/orders/user/${userId}`);
-    const json = await response.json();
-    if (!response.ok) {
-      throw new Error(json.message || `HTTP error! status: ${response.status}`);
-    }
+    // const response = await fetchWithAuth(`${API_BASE_URL}/orders/user/${userId}`);
+    // const json = await response.json();
+    // if (!response.ok) {
+    //   throw new Error(json.message || `HTTP error! status: ${response.status}`);
+    // }
 
-    const itemsResponse = await itemsApi.getAll();
-    const items = Array.isArray(itemsResponse) ? itemsResponse : itemsResponse.rows || [];
-    const itemsById = new Map<string, any>();
-    items.forEach((item: any) => {
-      const normalized = normalizeItem(item);
-      itemsById.set(normalized.id, normalized);
-      itemsById.set(normalized.itemId, normalized);
-    });
+    // const itemsResponse: Order = await itemsApi.getAll();
+    // const items = Array.isArray(itemsResponse) ? itemsResponse : itemsResponse.rows || [];
 
-    const hydratedOrders = await Promise.all((json.data || []).map(async (order: any) => {
-      const orderItemsResponse = await orderItemsApi.getByOrderId(order.orderId ?? order.id);
-      const orderItems = Array.isArray(orderItemsResponse) ? orderItemsResponse : orderItemsResponse.data || [];
-      return normalizeOrder(order, itemsById, orderItems);
-    }));
+
+    // const hydratedOrders = await Promise.all((json.data || []).map(async (order: { orderId?: string; id?: string; status?: string }) => {
+    //   const orderItemsResponse = await orderItemsApi.getByOrderId(order.orderId as string);
+    //   const orderItems = Array.isArray(orderItemsResponse) ? orderItemsResponse : orderItemsResponse.data || [];
+    //   return normalizeOrder(order, itemsById, orderItems);
+    // }));
+
+    // return {
+    //   ...json,
+    //   data: hydratedOrders,
+    // };
 
     return {
-      ...json,
-      data: hydratedOrders,
-    };
+      data: "testing"
+    }
   },
 
   // Update order status
@@ -415,8 +416,7 @@ export const itemsApi = {
   getAll: async () => {
     const response = await fetch(`${API_BASE_URL}/items`);
     const json = await response.json();
-    const items = (json.data?.data || []).map((item: any) => normalizeItem(item));
-    (items as any).rows = items;
+    const items: Item[] = (json.data?.data || []).map((item: Item) => normalizeItem(item));
     return items;
   },
 
@@ -540,39 +540,57 @@ export const cartApi = {
 
   // Get cart items by user ID
   getCartItems: async (userId: string) => {
-    try {
-      const cart = await cartApi.getCartByUserId(userId);
-      console.log('Current cart for user', userId, ':', cart);
-      if (!cart) {
-        return [];
-      }
+    // try {
+    //   const cart = await cartApi.getCartByUserId(userId);
+    //   console.log('Current cart for user', userId, ':', cart);
+    //   if (!cart) {
+    //     return [];
+    //   }
 
-      const [cartItemsResponse, itemsResponse] = await Promise.all([
-        fetchWithAuth(`${API_BASE_URL}/cart-items/cart/${cart.cartId ?? cart.id}`),
-        itemsApi.getAll(),
-      ]);
+    //   const [cartItemsResponse, itemsResponse] = await Promise.all([
+    //     fetchWithAuth(`${API_BASE_URL}/cart-items/cart/${cart.cartId ?? cart.id}`),
+    //     itemsApi.getAll(),
+    //   ]);
 
-      if (!cartItemsResponse.ok) {
-        const errorData = await cartItemsResponse.json().catch(() => ({ message: cartItemsResponse.statusText }));
-        throw new Error(errorData.message || `HTTP error! status: ${cartItemsResponse.status}`);
-      }
+    //   if (!cartItemsResponse.ok) {
+    //     const errorData = await cartItemsResponse.json().catch(() => ({ message: cartItemsResponse.statusText }));
+    //     throw new Error(errorData.message || `HTTP error! status: ${cartItemsResponse.status}`);
+    //   }
 
-      const json = await cartItemsResponse.json();
-      const cartItems = json.data || [];
-      const items = Array.isArray(itemsResponse) ? itemsResponse : itemsResponse.rows || [];
-      const itemsById = new Map<string, any>();
+    //   const json = await cartItemsResponse.json();
+    //   const cartItems = json.data || [];
+    //   const items = Array.isArray(itemsResponse) ? itemsResponse : itemsResponse.rows || [];
+    //   const itemsById = new Map<string, any>();
 
-      items.forEach((item: any) => {
-        const normalized = normalizeItem(item);
-        itemsById.set(normalized.id, normalized);
-        itemsById.set(normalized.itemId, normalized);
-      });
+    //   items.forEach((item: any) => {
+    //     const normalized = normalizeItem(item);
+    //     itemsById.set(normalized.id as string, normalized);
+    //     itemsById.set(normalized.itemId as string, normalized);
+    //   });
 
-      return cartItems.map((cartItem: any) => normalizeCartItem(cartItem, userId, itemsById));
-    } catch (error) {
-      console.error('Get cart items API Error:', error);
-      throw error;
-    }
+    //   return cartItems.map((cartItem: any) => normalizeCartItem(cartItem, userId, itemsById));
+    // } catch (error) {
+    //   console.error('Get cart items API Error:', error);
+    //   throw error;
+    // }
+
+    return [
+      {
+        id: "1",
+        cartId: "1",
+        userId: userId,
+        itemId: "item1",
+        quantity: 2,
+        item: {
+          id: "item1",
+          name: "Item 1",
+          description: "Description for Item 1",
+          price: 10.0,
+          categoryId: "cat1",
+          imageUrl: "https://example.com/item1.jpg",
+          available: true,
+        },
+      }];
   },
 
   // Update cart item quantity

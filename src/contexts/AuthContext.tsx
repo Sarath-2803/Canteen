@@ -2,15 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-type User = {
-  id?: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  role: "customer" | "admin" | "Customer" | "Admin";
-};
+import { User } from "@/lib/types";
 
 type AuthContextType = {
   user: User | null;
@@ -29,6 +21,7 @@ const isTokenExpired = (token: string): boolean => {
     const exp = payload.exp * 1000; // Convert to milliseconds
     return Date.now() >= exp;
   } catch (error) {
+    console.error("Error decoding token:", error);
     return true; // If token is invalid, consider it expired
   }
 };
@@ -114,6 +107,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return () => clearInterval(intervalId);
     } catch (error) {
       // Fallback: check every 60 seconds if token parsing fails
+      console.error("Error parsing token for expiration check:", error);
       const intervalId = setInterval(checkTokenExpiration, 60000);
       return () => clearInterval(intervalId);
     }

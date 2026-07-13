@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
-const geistMono = Geist_Mono({ subsets: ["latin"] });
+// const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Nosh & go",

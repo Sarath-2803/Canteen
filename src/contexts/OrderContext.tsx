@@ -2,25 +2,9 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { ordersApi } from "@/lib/api";
-import { useCart, CartItem } from "./CartContext";
+import { useCart } from "./CartContext";
 import { useAuth } from "./AuthContext";
-
-export interface OrderItem {
-	id: number;
-	name: string;
-	price: number;
-	quantity: number;
-}
-
-export interface Order {
-	id: string;
-	userId: string;
-	items: OrderItem[];
-	totalAmount: number;
-	status: "pending" | "completed" | "canceled";
-	createdAt: Date;
-	updatedAt: Date;
-}
+import { CartItem, Order, OrderItem, OrderStatus } from "@/lib/types";
 
 interface OrderContextType {
 	orders: Order[];
@@ -29,7 +13,7 @@ interface OrderContextType {
 	loading: boolean;
 	checkout: (userId: string, paymentMethod: string) => Promise<Order>; // Checkout from cart
 	addOrder: (userId: string, items: OrderItem[], totalAmount: number) => Promise<Order>;
-	updateOrderStatus: (orderId: string, status: Order["status"]) => Promise<void>;
+	updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
 	cancelOrder: (orderId: string) => Promise<void>;
 	deleteOrder: (orderId: string) => Promise<void>;
 	getOrderById: (orderId: string) => Order | undefined;
@@ -41,7 +25,7 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 export function OrderProvider({ children }: { children: React.ReactNode }) {
 	const [orders, setOrders] = useState<Order[]>([]);
 	const [loading, setLoading] = useState(false);
-	const { cart, clearCart } = useCart();
+	const { cart } = useCart();
 
 	// Current order items from cart
 	const currentOrderItems = cart;
@@ -71,10 +55,10 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 			setLoading(true);
 			// Fetch orders for the current user only
 			// console.log('Fetching orders for user:', user.userId);
-			const response = await ordersApi.getByUserId(user.userId);
+			const response = await ordersApi.getByUserId(user.id as string);
 			if (response.success) {
 				// Ensure each order has an items array
-				const ordersWithItems = response.data.map((order: any) => ({
+				const ordersWithItems = response.data.map((order: { items?: OrderItem[] }) => ({
 					...order,
 					items: order.items || []
 				}));

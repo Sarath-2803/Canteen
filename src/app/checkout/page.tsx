@@ -6,11 +6,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useOrder } from "@/contexts/OrderContext";
 import { usePayment } from "@/contexts/PaymentContext";
-import { processPayment, processUpiPayment, PaymentDetails, UpiDetails } from "@/services/paymentService";
+import { processPayment, processUpiPayment } from "@/services/paymentService";
 import { TEST_CARDS } from "@/services/testCards";
 import Header from "@/components/Header";
-
-type PaymentMethod = "card" | "upi";
+import { PaymentMethod, PaymentDetails, UpiDetails } from "@/lib/types";
 
 export default function CheckoutPage() {
 	const router = useRouter();

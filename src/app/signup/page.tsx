@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+// import { useAuth } from "@/contexts/AuthContext";
 import { useSearchParams } from "next/navigation";
 import { usersApi } from "@/lib/api";
 

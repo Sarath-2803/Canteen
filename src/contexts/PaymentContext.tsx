@@ -1,16 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
-
-export interface Payment {
-	id: string;
-	orderId: string;
-	amount: number;
-	status: "pending" | "completed" | "failed";
-	transactionId?: string;
-	createdAt: Date;
-	lastFour?: string;
-}
+import { Payment } from "@/lib/types";
 
 interface PaymentContextType {
 	payments: Payment[];

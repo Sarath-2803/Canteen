@@ -3,20 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { cartApi } from "@/lib/api";
 import { useRouter } from "next/navigation";
-
-export interface CartItem {
-  id: string;
-  userId: string;
-  itemId: string;
-  quantity: number;
-  item: {
-    id: string;
-    name: string;
-    price: number;
-    imageUrl: string;
-    available: boolean;
-  };
-}
+import { CartItem } from "@/lib/types";
 
 interface CartContextType {
   cart: CartItem[];

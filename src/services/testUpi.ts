@@ -1,5 +1,7 @@
+import { TestUpi, UpiProvider } from "@/lib/types";
+
 // Test UPI IDs for demonstration purposes
-export const TEST_UPI_IDS = {
+export const TEST_UPI_IDS: Record<string, TestUpi> = {
 	SUCCESS: {
 		id: "test@paytm",
 		description: "Always succeeds",
@@ -15,7 +17,7 @@ export const TEST_UPI_IDS = {
 } as const;
 
 // Common UPI providers
-export const UPI_PROVIDERS = [
+export const UPI_PROVIDERS: readonly UpiProvider[] = [
 	{ name: "Paytm", suffix: "@paytm" },
 	{ name: "Google Pay", suffix: "@googlepay" },
 	{ name: "PhonePe", suffix: "@phonepe" },

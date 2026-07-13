@@ -1,4 +1,6 @@
-export const TEST_CARDS = {
+import { TestCard } from "@/lib/types";
+
+export const TEST_CARDS: Record<string, TestCard> = {
 	SUCCESS: {
 		number: "4532015112830366",
 		expiry: "12/25",

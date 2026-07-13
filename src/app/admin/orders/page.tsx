@@ -1,33 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ordersApi, usersApi } from "@/lib/api";
-
-type OrderStatus = "pending" | "completed" | "canceled" | "refunded";
-
-type User = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  role: string;
-};
-
-type Order = {
-  id: string;
-  userId: string;
-  totalAmount: number;
-  status: OrderStatus;
-  createdAt: string;
-  updatedAt: string;
-};
+import { AdminUser, AdminOrder, OrderStatus } from "@/lib/types";
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [editStatus, setEditStatus] = useState<OrderStatus>("pending");
   const [isModalOpen, setIsModalOpen] = useState(false);
