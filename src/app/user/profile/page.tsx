@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export default function UserProfilePage() {
   const { user, login } = useAuth();
-
+  const token = localStorage.getItem("token") || "";
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [phone, setPhone] = useState(user?.phone || "");
@@ -26,9 +26,10 @@ export default function UserProfilePage() {
 
     // Update localStorage
     localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.setItem("token", localStorage.getItem("token") || "");
 
     // Update AuthContext
-    login(updatedUser);
+    login(updatedUser,token);
 
     setTimeout(() => {
       setSaving(false);

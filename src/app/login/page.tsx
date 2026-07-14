@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 import { usersService } from "@/services/users";
-import { setStoredUser } from "@/lib/auth";
+// import { setStoredUser } from "@/lib/auth";
 
 export default function LoginPage() {
 	const router = useRouter();
@@ -71,16 +71,23 @@ export default function LoginPage() {
 			router.replace(
 				redirectPath || "/"
 			);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(
 				"Login failed:",
 				err
 			);
 
-			setError(
-				err.message ||
-					"Login failed"
-			);
+			if (err instanceof Error) {
+				setError(
+					err.message ||
+						"Login failed"
+				);
+			} else {
+				setError(
+					"An unexpected error occurred."
+				);
+			}
+			
 		} finally {
 			setLoading(false);
 		}
@@ -181,7 +188,7 @@ export default function LoginPage() {
 						</form>
 
 						<p className="text-sm text-gray-600 mt-4 text-center">
-							Don't have an account?{" "}
+							Don&apos;t have an account?{" "}
 							<Link
 								href="/signup"
 								className="text-green-600 font-medium hover:underline"

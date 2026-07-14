@@ -5,8 +5,8 @@ export const usersService = {
   signIn: (email: string, password: string) =>
     api.post<ApiResponse<{token:string;user:User}>>('/users/signin', { email, password }),
 
-  signUp: (data: Omit<User,'id'> & { password: string }) =>
-    api.post<ApiResponse<User>>('/users/signup', data),
+  signUp: (data: Omit<User,'userId'> & { password: string }) =>
+    api.post<ApiResponse<{token:string;user:User}>>('/users/signup', data),
 
   getAll: () =>
     api.get<ApiResponse<User[]>>('/users'),

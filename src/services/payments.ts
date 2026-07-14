@@ -3,7 +3,7 @@ import { Payment, ApiResponse } from '@/lib/types';
 
 export const paymentsService = {
   createOrder: (orderId: string, amount: number) =>
-    api.post<ApiResponse<any>>('/payments/create-order', { orderId, amount }),
+    api.post<ApiResponse<Payment>>('/payments/create-order', { orderId, amount }),
 
   verify: (payload: unknown) =>
     api.post<ApiResponse<Payment>>('/payments/verify', payload),

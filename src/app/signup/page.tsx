@@ -93,16 +93,25 @@ function SignUpForm() {
 			router.replace(
 				redirect
 			);
-		} catch (err: any) {
-			console.error(
-				"Signup failed:",
-				err
-			);
+		} catch (err: unknown) {
+			if(err instanceof Error) {
+				console.error(
+					"Signup failed:",
+					err
+				);
+			
 
-			setError(
-				err.message ||
-					"Failed to create account"
-			);
+				setError(
+					err.message ||
+						"Failed to create account"
+				);
+			} else {
+				console.error(
+					"Signup failed:",
+					err
+				);
+				setError("An unexpected error occurred");
+			}
 		} finally {
 			setLoading(false);
 		}

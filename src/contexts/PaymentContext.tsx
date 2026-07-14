@@ -18,7 +18,7 @@ interface PaymentContextType {
   createPayment: (
     orderId: string,
     amount: number
-  ) => Promise<any>;
+  ) => Promise<unknown>;
 
   verifyPayment: (
     payload: unknown

@@ -160,6 +160,7 @@ export interface Order {
   userId: string;
   totalAmount: number;
   status: OrderStatus;
+  items?: OrderItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -168,6 +169,7 @@ export interface OrderItem {
   id: string;
   orderId: string;
   itemId: string;
+  itemName: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -214,6 +216,13 @@ export interface VerifyPaymentRequest {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+}
+
+export interface TestCard {
+  number: string;
+  expiry: string;
+  cvv: string;
+  name: string;
 }
 
 

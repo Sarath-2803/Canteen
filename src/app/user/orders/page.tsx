@@ -101,9 +101,9 @@ export default function UserOrdersPage() {
                   order.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between text-sm">
                       <span className="text-gray-800">
-                        <span className="font-medium">{item.name}</span> × {item.quantity}
+                        <span className="font-medium">{item.itemName}</span> × {item.quantity}
                       </span>
-                      <span className="font-medium text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-medium text-gray-900">₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
                     </div>
                   ))
                 ) : (
