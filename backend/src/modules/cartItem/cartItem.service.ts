@@ -4,6 +4,7 @@ import { PaginatedResult, PaginationOptions } from "../../utils/pagination.js";
 import { CartItemDTO, CreateCartItemDTO, UpdateCartItemDTO } from "./cartItem.dto.js";
 import CartItem from "./cartItem.entity.js";
 import CartItemRepository from "./cartItem.repository.js";
+import itemService from "../item/item.service.js";
 
 const toCartItemDto = (cartItem: CartItem) : CartItemDTO => {
     return cartItem.toJSON() as CartItemDTO;
@@ -34,10 +35,30 @@ const getCartItemById = async (cartItemId: string) : Promise<CartItemDTO> => {
 }
 
 // get cart items by cartId
-const getCartItemsByCartId = async (cartId: string) : Promise<CartItemDTO[]> => {
+const getCartItemsByCartId = async (
+    cartId: string
+): Promise<CartItemDTO[]> => {
     const cartItems = await CartItemRepository.findAllByCartId(cartId);
-    return cartItems.map(cartItem => toCartItemDto(cartItem));
-}
+
+    const cartItemDtos = await Promise.all(
+        cartItems.map(async (cartItem) => {
+            const item = await itemService.getItemById(cartItem.itemId);
+
+            return {
+                ...toCartItemDto(cartItem),
+                item: {
+                    itemId: item.itemId,
+                    itemName: item.itemName,
+                    price: item.price,
+                    imageUrl: item.imageUrl,
+                    available: item.isAvailable
+                }
+            };
+        })
+    );
+
+    return cartItemDtos;
+};
 
 // update cart item 
 const updateCartItem = async (cartItemId: string, data: UpdateCartItemDTO) : Promise<CartItemDTO> => {

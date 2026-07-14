@@ -1,140 +1,181 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+
 import { useRouter } from "next/navigation";
+
 import { User } from "@/lib/types";
+
+import {
+  getToken,
+  setToken,
+  clearAuth,
+  getStoredUser,
+  setStoredUser,
+  isTokenExpired,
+} from "@/lib/auth";
 
 type AuthContextType = {
   user: User | null;
   token: string | null;
-  login: (userData: User, token?: string) => void;
-  logout: () => void;
   loading: boolean;
+
+  login: (
+    user: User,
+    token: string
+  ) => void;
+
+  logout: () => void;
+
+  isAuthenticated: boolean;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext =
+  createContext<AuthContextType | null>(
+    null
+  );
 
-// Helper function to decode JWT and check expiration
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const exp = payload.exp * 1000; // Convert to milliseconds
-    return Date.now() >= exp;
-  } catch (error) {
-    console.error("Error decoding token:", error);
-    return true; // If token is invalid, consider it expired
-  }
-};
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export function AuthProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+  const [user, setUser] =
+    useState<User | null>(null);
+
+  const [token, setJwtToken] =
+    useState<string | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const logout = useCallback(() => {
+    clearAuth();
+
     setUser(null);
-    setToken(null);
+    setJwtToken(null);
 
-    // Notify other contexts about user change
-    window.dispatchEvent(new Event("userChanged"));
-    
-    // Redirect to login
-    router.push("/login");
-  };
+    window.dispatchEvent(
+      new Event("userChanged")
+    );
 
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
-    
-    // Check if token exists and is valid
-    if (storedToken && !isTokenExpired(storedToken)) {
-      setToken(storedToken);
-      if (stored) {
-        setUser(JSON.parse(stored));
-      }
-    } else if (storedToken) {
-      // Token expired or invalid, clear storage and redirect
-      // localStorage.removeItem("user");
-      // localStorage.removeItem("token");
-      // router.push("/login");
-      logout();
-    }
-    
-    setLoading(false);
+    router.replace("/login");
   }, [router]);
 
-  // Check token expiration - optimized approach
+  const login = useCallback(
+    (
+      userData: User,
+      jwtToken: string
+    ) => {
+      setStoredUser(userData);
+      setToken(jwtToken);
+
+      setUser(userData);
+      setJwtToken(jwtToken);
+
+      window.dispatchEvent(
+        new Event("userChanged")
+      );
+    },
+    []
+  );
+
+  useEffect(() => {
+    const storedToken = getToken();
+
+    if (
+      !storedToken ||
+      isTokenExpired(storedToken)
+    ) {
+      clearAuth();
+      setLoading(false);
+      return;
+    }
+
+    const storedUser =
+      getStoredUser();
+
+    setJwtToken(storedToken);
+    setUser(storedUser);
+
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     if (!token) return;
 
-    const checkTokenExpiration = () => {
-      const storedToken = localStorage.getItem("token");
-      if (!storedToken || isTokenExpired(storedToken)) {
-        console.log("Token expired, logging out...");
-        logout();
-      }
-    };
+    const payload = JSON.parse(
+      atob(token.split(".")[1])
+    );
 
-    // Get token expiration time
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const exp = payload.exp * 1000;
-      const now = Date.now();
-      const timeUntilExpiry = exp - now;
+    const expiresAt =
+      payload.exp * 1000;
 
-      // If token expires in less than 5 minutes, check every 10 seconds
-      // Otherwise check every 60 seconds
-      const checkInterval = timeUntilExpiry < 5 * 60 * 1000 ? 10000 : 60000;
+    const remaining =
+      expiresAt - Date.now();
 
-      // Set up interval check
-      const intervalId = setInterval(checkTokenExpiration, checkInterval);
-
-      // Also set a timeout to check exactly when token expires
-      if (timeUntilExpiry > 0) {
-        const timeoutId = setTimeout(() => {
-          checkTokenExpiration();
-        }, timeUntilExpiry + 1000); // +1 second buffer
-
-        return () => {
-          clearInterval(intervalId);
-          clearTimeout(timeoutId);
-        };
-      }
-
-      return () => clearInterval(intervalId);
-    } catch (error) {
-      // Fallback: check every 60 seconds if token parsing fails
-      console.error("Error parsing token for expiration check:", error);
-      const intervalId = setInterval(checkTokenExpiration, 60000);
-      return () => clearInterval(intervalId);
-    }
-  }, [token]);
-
-  const login = (userData: User, jwtToken?: string) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-    
-    if (jwtToken) {
-      localStorage.setItem("token", jwtToken);
-      setToken(jwtToken);
+    if (remaining <= 0) {
+      logout();
+      return;
     }
 
-    // Notify other contexts about user change
-    window.dispatchEvent(new Event("userChanged"));
-  };
+    const timer = setTimeout(
+      logout,
+      remaining
+    );
+
+    return () =>
+      clearTimeout(timer);
+  }, [token, logout]);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      loading,
+
+      login,
+      logout,
+
+      isAuthenticated:
+        !!user && !!token,
+    }),
+    [
+      user,
+      token,
+      loading,
+      login,
+      logout,
+    ]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider
+      value={value}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be inside AuthProvider");
-  return ctx;
-};
+export function useAuth() {
+  const context =
+    useContext(AuthContext);
+
+  if (!context) {
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
+  }
+
+  return context;
+}

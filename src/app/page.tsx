@@ -2,98 +2,159 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback } from "react";
+
+import Header from "@/components/Header";
+
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import Header from "@/components/Header"; 
-import { useState, useEffect } from "react";
-import { itemsApi } from "@/lib/api";
-import { Item, MenuItem } from "@/lib/types";
 
+import { itemsService } from "@/services/items";
+
+import { Item } from "@/lib/types";
 
 export default function Home() {
 	const router = useRouter();
+
 	const { addToCart, cart } = useCart();
 	const { user, loading: authLoading } = useAuth();
-	const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+
+	const [menuItems, setMenuItems] = useState<Item[]>([]);
 	const [loading, setLoading] = useState(true);
+
 	const [quantities, setQuantities] = useState<Record<string, number>>({});
 	const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
-	// const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-	// Redirect admin users to their dashboard
+	// Redirect admin users away from customer menu
 	useEffect(() => {
-		if (!authLoading && user && user.role === "admin") {
-			router.push("/admin/dashboard");
+		if (!authLoading && user?.role?.toLowerCase() === "admin") {
+			router.replace("/admin/dashboard");
 		}
-	}, [user, authLoading, router]);
+	}, [authLoading, user, router]);
 
+	// Fetch menu items
 	useEffect(() => {
 		const fetchItems = async () => {
 			try {
-				const data = await itemsApi.getAll();
-				setMenuItems(data);
+				setLoading(true);
 
-				console.log("Fetched menu items:", data);
-				
-				// Initialize quantities to 1 for all available items
+				const response = await itemsService.getAll();
+
+				// Supports both paginated and plain responses
+				const items =
+					response?.data?.data ??
+					response?.data ??
+					[];
+
+				setMenuItems(items);
+
 				const initialQuantities: Record<string, number> = {};
-				data.forEach((item: Item) => {
-					if (item.available) {
-						initialQuantities[item.id] = 1;
+
+				items.forEach((item: Item) => {
+					if (
+						item.isAvailable
+					) {
+						initialQuantities[item.itemId] = 1;
 					}
 				});
+
 				setQuantities(initialQuantities);
 			} catch (error) {
-				console.error("Failed to fetch menu items:", error);
+				console.error(
+					"Failed to fetch menu items:",
+					error
+				);
 			} finally {
 				setLoading(false);
 			}
 		};
+
 		fetchItems();
 	}, []);
 
-	//const categories = ["All", ...new Set(menuItems.map((item) => item.category))];
+	const cartCount = useMemo(
+		() =>
+			cart.reduce(
+				(sum, item) =>
+					sum + item.quantity,
+				0
+			),
+		[cart]
+	);
 
-	// const filteredItems =
-	// 	selectedCategory === "All"
-	// 		? menuItems
-	// 		: menuItems.filter((item) => item.category === selectedCategory);
+	const handleQuantityChange = useCallback(
+		(itemId: string, change: number) => {
+			setQuantities((prev) => {
+				const current =
+					prev[itemId] ?? 0;
 
-	const handleQuantityChange = (itemId: string, change: number) => {
-		setQuantities((prev) => {
-			const currentQty = prev[itemId] || 0;
-			const newQty = Math.max(0, currentQty + change);
-			return { ...prev, [itemId]: newQty };
-		});
-	};
+				return {
+					...prev,
+					[itemId]: Math.max(
+						0,
+						current + change
+					),
+				};
+			});
+		},
+		[]
+	);
 
-	const handleAddToCart = async (item: Item) => {
-		const quantity = quantities[item.id] || 1;
-
-		try {
-			// Get userId from localStorage
-			const userString = localStorage.getItem("user");
-			console.log("User from localStorage:", userString);
-			if (!userString) {
+	const handleAddToCart = useCallback(
+		async (item: Item) => {
+			if (!user) {
 				router.push("/login");
 				return;
 			}
-			const user = JSON.parse(userString);
 
-			// Call addToCart with the authenticated user id
-			await addToCart(user.userId, item.id, quantity);
+			console.log("user is", user);
 
-			// Reset quantity and show success feedback
-			setQuantities((prev) => ({ ...prev, [item.id]: 0 }));
-			setAddedItems((prev) => ({ ...prev, [item.id]: true }));
-			setTimeout(() => {
-				setAddedItems((prev) => ({ ...prev, [item.id]: false }));
-			}, 2000);
-		} catch (error) {
-			console.error("Failed to add item to cart:", error);
-			alert("Failed to add item to cart. Please try again.");
-		}
-	};
+			const quantity =
+				quantities[item.itemId] || 1;
+
+			try {
+				await addToCart(
+					item.itemId,
+					quantity
+				);
+
+				setQuantities((prev) => ({
+					...prev,
+					[item.itemId]: 1,
+				}));
+
+				setAddedItems((prev) => ({
+					...prev,
+					[item.itemId]: true,
+				}));
+
+				setTimeout(() => {
+					setAddedItems(
+						(prev) => ({
+							...prev,
+							[item.itemId]:
+								false,
+						})
+					);
+				}, 2000);
+			} catch (error) {
+				console.error(
+					"Failed to add item to cart:",
+					error
+				);
+
+				alert(
+					"Failed to add item to cart. Please try again."
+				);
+			}
+		},
+		[
+			user,
+			router,
+			addToCart,
+			quantities,
+		]
+	);
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -101,199 +162,195 @@ export default function Home() {
 
 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				<div className="flex justify-between items-center mb-8">
-					<h1 className="text-4xl font-bold text-gray-900">Menu</h1>
-					{cart.length > 0 && (
+					<h1 className="text-4xl font-bold text-gray-900">
+						Menu
+					</h1>
+
+					{cartCount > 0 && (
 						<button
-							onClick={() => router.push("/checkout")}
-							className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg"
+							onClick={() =>
+								router.push(
+									"/checkout"
+								)
+							}
+							className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
 						>
-							Checkout ({cart.length})
+							Checkout (
+							{cartCount})
 						</button>
 					)}
 				</div>
 
-				{/* Category Filter */}
-				{/* <div className="mb-8">
-					<h2 className="text-lg font-semibold text-gray-900 mb-4">Categories</h2>
-					<div className="flex flex-wrap gap-3">
-						{categories.map((category) => (
-							<button
-								key={category}
-								onClick={() => setSelectedCategory(category)}
-								className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-									selectedCategory === category
-										? "bg-green-500 text-white"
-										: "bg-white text-gray-700 hover:bg-gray-100"
-								}`}
-							>
-								{category}
-							</button>
-						))}
-					</div>
-				</div> */}
-
 				{loading ? (
-					<div className="text-center py-12">
-						<p className="text-xl text-gray-600">Loading menu...</p>
+					<div className="text-center py-20">
+						<p className="text-xl text-gray-600">
+							Loading
+							menu...
+						</p>
+					</div>
+				) : menuItems.length === 0 ? (
+					<div className="text-center py-20">
+						<p className="text-gray-600 text-lg">
+							No menu items
+							available.
+						</p>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-					{menuItems.map((item: Item) => {
-						const quantity = quantities[item.id] || 0;
-						const isAdded = addedItems[item.id];
+						{menuItems.map(
+							(item) => {
+								const quantity =
+									quantities[
+										item.itemId
+									] || 0;
 
-						return (
-							<div
-								key={item.id}
-								className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 ${!item.available ? 'opacity-75' : ''}`}
-							>
-								<div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300">
-									<Image
-										src={item.imageUrl}
-										alt={item.name}
-										fill
-										className="object-cover"
-										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-										priority={false}
-										onError={(e) => {
-											e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='18' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3EImage not available%3C/text%3E%3C/svg%3E";
-										}}
-									/>
-									{!item.available && (
-										<div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center">
-											<span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold text-lg">
-												NOT AVAILABLE
-											</span>
-										</div>
-									)}
-								</div>
-								<div className="p-4">
-									{/* <p className="text-xs text-green-600 font-semibold mb-1">
-										{item.category}
-									</p> */}
-									<h3 className="text-lg font-semibold text-gray-900 mb-2">
-										{item.name}
-									</h3>
-									<p className="text-gray-700 font-medium mb-3">
-										₹{item.price}
-									</p>
+								const isAdded =
+									addedItems[
+										item.itemId
+									];
 
-									{/* Quantity Controls */}
-									<div className="flex items-center gap-3 mb-3">
-										<button
-											onClick={() => handleQuantityChange(item.id, -1)}
-											disabled={quantity === 0 || !item.available}
-											className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												className="h-4 w-4 text-gray-700"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M20 12H4"
-												/>
-											</svg>
-										</button>
+								const available =
+									item.isAvailable;
 
-										<span className="font-semibold text-gray-900 w-12 text-center text-lg">
-											{quantity}
-										</span>
+								const name =
+									item.itemName;
 
-										<button
-											onClick={() => handleQuantityChange(item.id, 1)}
-											disabled={!item.available}
-											className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												className="h-4 w-4 text-gray-700"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M12 4v16m8-8H4"
-												/>
-											</svg>
-										</button>
-									</div>
-
-									{/* Add to Cart Button */}
-									<button
-										onClick={() => handleAddToCart(item)}
-										disabled={(quantity === 0 && !isAdded) || !item.available}
-										className={`w-full ${
-											!item.available
-												? "bg-gray-400 cursor-not-allowed"
-												: isAdded
-												? "bg-green-600"
-												: quantity === 0
-												? "bg-gray-300 cursor-not-allowed"
-												: "bg-green-500 hover:bg-green-600"
-										} text-white font-semibold py-2 rounded-lg transition-colors duration-300 flex items-center justify-center gap-2`}
+								return (
+									<div
+										key={
+											item.itemId
+										}
+										className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 ${
+											!available
+												? "opacity-75"
+												: ""
+										}`}
 									>
-										{isAdded ? (
-											<>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													className="h-5 w-5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
+										<div className="relative h-48 bg-gray-200">
+											<Image
+												src={
+													item.imageUrl ||
+													"/placeholder-food.jpg"
+												}
+												alt={
+													name
+												}
+												fill
+												className="object-cover"
+												sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
+											/>
+
+											{!available && (
+												<div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+													<span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">
+														NOT
+														AVAILABLE
+													</span>
+												</div>
+											)}
+										</div>
+
+										<div className="p-4">
+											<h3 className="text-lg font-semibold text-gray-900 mb-2">
+												{
+													name
+												}
+											</h3>
+
+											<p className="text-gray-700 font-medium mb-3">
+												₹
+												{
+													item.price
+												}
+											</p>
+
+											<div className="flex items-center gap-3 mb-3">
+												<button
+													onClick={() =>
+														handleQuantityChange(
+															item.itemId,
+															-1
+														)
+													}
+													disabled={
+														quantity ===
+															0 ||
+														!available
+													}
+													className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
 												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M5 13l4 4L19 7"
-													/>
-												</svg>
-												Added to Cart
-											</>
-										) : (
-											<>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													className="h-5 w-5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
+													-
+												</button>
+
+												<span className="font-semibold text-gray-900 w-12 text-center text-lg">
+													{
+														quantity
+													}
+												</span>
+
+												<button
+													onClick={() =>
+														handleQuantityChange(
+															item.itemId,
+															1
+														)
+													}
+													disabled={
+														!available
+													}
+													className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
 												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-													/>
-												</svg>
-												{quantity === 0
+													+
+												</button>
+											</div>
+
+											<button
+												onClick={() =>
+													handleAddToCart(
+														item
+													)
+												}
+												disabled={
+													(quantity ===
+														0 &&
+														!isAdded) ||
+													!available
+												}
+												className={`w-full text-white font-semibold py-2 rounded-lg transition-colors duration-300 ${
+													!available
+														? "bg-gray-400 cursor-not-allowed"
+														: isAdded
+														? "bg-green-600"
+														: quantity ===
+														  0
+														? "bg-gray-300 cursor-not-allowed"
+														: "bg-green-500 hover:bg-green-600"
+												}`}
+											>
+												{isAdded
+													? "Added to Cart"
+													: quantity ===
+													  0
 													? "Select Quantity"
 													: `Add ${quantity} to Cart`}
-											</>
-										)}
-									</button>
+											</button>
 
-									{/* Total Price Display */}
-									{quantity > 0 && (
-										<p className="text-center text-sm text-gray-600 mt-2">
-											Total: ₹{item.price * quantity}
-										</p>
-									)}
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			)}
+											{quantity >
+												0 && (
+												<p className="text-center text-sm text-gray-600 mt-2">
+													Total:
+													₹
+													{item.price *
+														quantity}
+												</p>
+											)}
+										</div>
+									</div>
+								);
+							}
+						)}
+					</div>
+				)}
 			</main>
 
 			<footer className="bg-white border-t mt-16">
@@ -301,99 +358,74 @@ export default function Home() {
 					<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 						<div>
 							<div className="flex items-center gap-2 mb-4">
-								<span className="text-2xl">🍵</span>
+								<span className="text-2xl">
+									🍵
+								</span>
 							</div>
+
 							<p className="text-sm text-gray-600">
-								© 2024 Food Ordering. All rights reserved.
+								© 2026 Food
+								Ordering.
+								All rights
+								reserved.
 							</p>
 						</div>
 
 						<div>
-							<h4 className="font-semibold text-gray-900 mb-4">About Us</h4>
-							<ul className="space-y-2">
+							<h4 className="font-semibold text-gray-900 mb-4">
+								About Us
+							</h4>
+
+							<ul className="space-y-2 text-sm text-gray-600">
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Our Story
-									</a>
+									Our Story
 								</li>
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Blog
-									</a>
+									Blog
 								</li>
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Careers
-									</a>
+									Careers
 								</li>
 							</ul>
 						</div>
 
 						<div>
-							<h4 className="font-semibold text-gray-900 mb-4">Support</h4>
-							<ul className="space-y-2">
+							<h4 className="font-semibold text-gray-900 mb-4">
+								Support
+							</h4>
+
+							<ul className="space-y-2 text-sm text-gray-600">
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Help Center
-									</a>
+									Help
+									Center
 								</li>
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Contact Us
-									</a>
+									Contact
+									Us
 								</li>
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										FAQs
-									</a>
+									FAQs
 								</li>
 							</ul>
 						</div>
 
 						<div>
-							<h4 className="font-semibold text-gray-900 mb-4">Legal</h4>
-							<ul className="space-y-2">
+							<h4 className="font-semibold text-gray-900 mb-4">
+								Legal
+							</h4>
+
+							<ul className="space-y-2 text-sm text-gray-600">
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Terms of Service
-									</a>
+									Terms of
+									Service
 								</li>
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Privacy Policy
-									</a>
+									Privacy
+									Policy
 								</li>
 								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Cookie Policy
-									</a>
+									Cookie
+									Policy
 								</li>
 							</ul>
 						</div>

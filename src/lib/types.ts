@@ -1,113 +1,161 @@
-// User types
-export type UserRole = "customer" | "admin" | "Customer" | "Admin";
+// ====================
+// API RESPONSE TYPES
+// ====================
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+
+// ====================
+// USER TYPES
+// ====================
+
+export type UserRole = "customer" | "admin";
 
 export interface User {
-  id?: string;
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
   phone?: string;
   role: UserRole;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface Item{
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    categoryId: string;
-    imageUrl: string;
-    available: boolean;
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
-// Cart types
-export interface CartItem {
-  id: string;
-  userId: string;
-  itemId: string;
-  quantity: number;
-  item: {
-    id: string;
-    name: string;
-    price: number;
-    imageUrl: string;
-    available: boolean;
-  };
-}
-
-// Order types
-export interface OrderItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
-
-export type OrderStatus = "pending" | "completed" | "canceled" | "refunded";
-
-export interface Order {
-  id: string;
-  userId: string;
-  items: OrderItem[];
-  totalAmount: number;
-  status: OrderStatus;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Payment types
-export interface Payment {
-  id: string;
-  orderId: string;
-  amount: number;
-  status: "pending" | "completed" | "failed";
-  transactionId?: string;
-  createdAt: Date;
-  lastFour?: string;
-}
-
-// Payment Service types
-export interface PaymentDetails {
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  cardholder: string;
-}
-
-export interface UpiDetails {
-  upiId: string;
-}
-
-export interface PaymentResponse {
-  success: boolean;
-  transactionId?: string;
-  message: string;
-}
-
-// Menu Item types
-export interface MenuItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  categoryId: string;
-  imageUrl: string;
-  available: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-// Admin types
-export interface AdminUser {
-  id: string;
+export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
   phone?: string;
-  role: string;
 }
 
-export interface AdminOrder {
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+
+// ====================
+// CATEGORY TYPES
+// ====================
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+}
+
+
+// ====================
+// ITEM TYPES
+// ====================
+
+export interface Item {
+  itemId: string;
+  itemName: string;
+  itemDescription: string;
+  price: number;
+  categoryId: string;
+  imageUrl?: string;
+  stockQuantity: number;
+  isAvailable: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateItemRequest {
+  itemName: string;
+  itemDescription: string;
+  price: number;
+  categoryId: string;
+  stockQuantity: number;
+  image?: File;
+}
+
+export interface UpdateItemRequest {
+  itemName?: string;
+  itemDescription?: string;
+  price?: number;
+  categoryId?: string;
+  stockQuantity?: number;
+  isAvailable?: boolean;
+  image?: File;
+}
+
+
+// ====================
+// CART TYPES
+// ====================
+
+export interface Cart {
+  cartId: string;
+  userId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CartItem {
+  cartItemId: string;
+  cartId: string;
+  itemId: string;
+  quantity: number;
+  item?: {
+    itemId: string;
+    itemName: string;
+    price: number;
+    imageUrl?: string;
+    isAvailable: boolean;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AddToCartRequest {
+  cartId: string;
+  itemId: string;
+  quantity: number;
+}
+
+
+// ====================
+// ORDER TYPES
+// ====================
+
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "preparing"
+  | "ready"
+  | "completed"
+  | "cancelled";
+
+export interface Order {
   id: string;
   userId: string;
   totalAmount: number;
@@ -116,31 +164,74 @@ export interface AdminOrder {
   updatedAt: string;
 }
 
-// Payment method types
-export type PaymentMethod = "card" | "upi";
-
-// Test card types
-export interface TestCard {
-  number: string;
-  expiry: string;
-  cvv: string;
-  name: string;
-}
-
-export interface TestUpi {
+export interface OrderItem {
   id: string;
-  description: string;
+  orderId: string;
+  itemId: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  item?: Item;
 }
 
-export interface UpiProvider {
-  name: string;
-  suffix: string;
+export interface CheckoutRequest {
+  paymentMethod: string;
 }
 
-export interface InventoryItem {
+
+// ====================
+// PAYMENT TYPES
+// ====================
+
+export type PaymentStatus =
+  | "pending"
+  | "completed"
+  | "failed";
+
+export interface Payment {
   id: string;
-  name: string;
-  price: number;
-  available: boolean;
-  imageUrl?: string;
+  orderId: string;
+  amount: number;
+  status: PaymentStatus;
+  transactionId?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreatePaymentOrderRequest {
+  orderId: string;
+  amount: number;
+}
+
+export interface RazorpayOrderResponse {
+  id: string;
+  amount: number;
+  currency: string;
+  receipt: string;
+}
+
+export interface VerifyPaymentRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+
+// ====================
+// UI TYPES
+// ====================
+
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
+export interface TableColumn<T> {
+  key: keyof T;
+  title: string;
+}
+
+export interface LoadingState {
+  loading: boolean;
+  error?: string;
 }

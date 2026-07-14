@@ -1,127 +1,228 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { cartApi } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+
 import { CartItem } from "@/lib/types";
+import { cartsService } from "@/services/carts";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (userId: string, itemId: string, quantity: number) => Promise<void>;
-  removeFromCart: (cartItemId: string) => Promise<void>;
-  updateCartItem: (cartItemId: string, quantity: number) => Promise<void>;
-  clearCart: () => void;
+  loading: boolean;
+
+  addToCart: (
+    itemId: string,
+    quantity?: number
+  ) => Promise<void>;
+
+  removeFromCart: (
+    cartItemId: string
+  ) => Promise<void>;
+
+  updateCartItem: (
+    cartItemId: string,
+    quantity: number
+  ) => Promise<void>;
+
   refreshCart: () => Promise<void>;
+
+  clearCart: () => void;
+
+  cartCount: number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
-// const userId = localStorage.getItem("user");
+const CartContext =
+  createContext<CartContextType | null>(
+    null
+  );
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
+export function CartProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user } = useAuth();
 
-  // Check user on mount and when storage changes
-  useEffect(() => {
-    const checkUser = () => {
-      const userString = localStorage.getItem("user");
-      if (!userString) {
-        setUserId(null);
+  const [cart, setCart] = useState<
+    CartItem[]
+  >([]);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const refreshCart =
+    useCallback(async () => {
+      if (!user?.userId) {
         setCart([]);
         return;
       }
-      
-      const user = JSON.parse(userString);
-      setUserId(user.id);
-    };
 
-    // Check on mount
-    checkUser();
+      try {
+        setLoading(true);
 
-    // Listen for storage changes (cross-tab)
-    window.addEventListener("storage", checkUser);
+        const cartResponse =
+          await cartsService.getByUserId(
+            user.userId
+          );
 
-    // Listen for custom login/logout events
-    window.addEventListener("userChanged", checkUser);
+        const cartData =
+          cartResponse.data;
 
-    return () => {
-      window.removeEventListener("storage", checkUser);
-      window.removeEventListener("userChanged", checkUser);
-    };
-  }, [router]);
+          // console.log("refreshCart cartData:", cartData);
 
-  const refreshCart = async () => {
-    if (!userId) return;
-    
-    try {
-      console.log("Refreshing cart for user:", userId);
-      const cartItems = await cartApi.getCartItems(userId);
-      console.log("Fetched cart items:", cartItems);
-      setCart(cartItems);
-    } catch (error) {
-      console.error("Failed to fetch cart items:", error);
-      setCart([]);
-    }
-  };
+        if (!cartData?.cartId) {
+          setCart([]);
+          return;
+        }
+
+        const itemsResponse =
+          await cartsService.getItems(
+            cartData.cartId
+          );
+        
+          console.log("refreshCart itemsResponse:", itemsResponse);
+
+        setCart(
+          itemsResponse.data ?? []
+        );
+      } catch (error) {
+        console.error(
+          "Failed to refresh cart:",
+          error
+        );
+
+        setCart([]);
+      } finally {
+        setLoading(false);
+      }
+    }, [user?.userId]);
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    // console.log("User from localStorage:", user);
-    setUserId(user ? JSON.parse(user).userId : null);
-    // setUserId(localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!).id : null);
-    if (user) {
-      refreshCart();
-    }
-  }, [userId]);
+    refreshCart();
+  }, [refreshCart]);
 
+  const addToCart =
+    useCallback(
+      async (
+        itemId: string,
+        quantity = 1
+      ) => {
+        if (!user?.userId) {
+          throw new Error(
+            "User not authenticated"
+          );
+        }
 
-  const addToCart = async (userId: string, itemId: string, quantity: number) => {
-    try {
-      await cartApi.addToCart(userId, itemId, quantity);
-      setUserId(userId); // Ensure userId is set before refreshing cart
-      await refreshCart();
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
-      throw error;
-    }
-  };
+        const cartResponse =
+          await cartsService.getByUserId(
+            user.userId
+          );
 
-  const updateCartItem = async (cartItemId: string, quantity: number) => {
-    try {
-      await cartApi.updateCartItem(cartItemId, quantity);
-      await refreshCart();
-    } catch (error) {
-      console.error("Failed to update cart item:", error);
-      throw error;
-    }
-  };
+        await cartsService.addItem(
+          cartResponse.data.cartId,
+          itemId,
+          quantity
+        );
 
-  const removeFromCart = async (cartItemId: string) => {
-    try {
-      await cartApi.deleteCartItem(cartItemId);
-      await refreshCart();
-    } catch (error) {
-      console.error("Failed to remove from cart:", error);
-      throw error;
-    }
-  };
+        await refreshCart();
+      },
+      [user?.userId, refreshCart]
+    );
 
-  const clearCart = () => {
-    setCart([]);
-  };
+  const updateCartItem =
+    useCallback(
+      async (
+        cartItemId: string,
+        quantity: number
+      ) => {
+        await cartsService.updateItem(
+          cartItemId,
+          quantity
+        );
+
+        await refreshCart();
+      },
+      [refreshCart]
+    );
+
+  const removeFromCart =
+    useCallback(
+      async (
+        cartItemId: string
+      ) => {
+        console.log("Removing cart item:", cartItemId);
+        await cartsService.removeItem(
+          cartItemId
+        );
+
+        await refreshCart();
+      },
+      [refreshCart]
+    );
+
+  const clearCart =
+    useCallback(() => {
+      setCart([]);
+    }, []);
+
+  const cartCount = useMemo(
+    () =>
+      cart.reduce(
+        (sum, item) =>
+          sum + item.quantity,
+        0
+      ),
+    [cart]
+  );
+
+  const value = useMemo(
+    () => ({
+      cart,
+      loading,
+      addToCart,
+      removeFromCart,
+      updateCartItem,
+      refreshCart,
+      clearCart,
+      cartCount,
+    }),
+    [
+      cart,
+      loading,
+      addToCart,
+      removeFromCart,
+      updateCartItem,
+      refreshCart,
+      clearCart,
+      cartCount,
+    ]
+  );
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateCartItem, clearCart, refreshCart }}>
+    <CartContext.Provider
+      value={value}
+    >
       {children}
     </CartContext.Provider>
   );
 }
 
 export function useCart() {
-  const context = useContext(CartContext);
+  const context =
+    useContext(CartContext);
+
   if (!context) {
-    throw new Error("useCart must be used within CartProvider");
+    throw new Error(
+      "useCart must be used inside CartProvider"
+    );
   }
+
   return context;
 }

@@ -1,69 +1,171 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+
 import { Payment } from "@/lib/types";
+import { paymentsService } from "@/services/payments";
 
 interface PaymentContextType {
-	payments: Payment[];
-	addPayment: (orderId: string, amount: number, transactionId: string, lastFour: string) => Payment;
-	updatePaymentStatus: (paymentId: string, status: Payment["status"]) => void;
-	getPaymentByOrderId: (orderId: string) => Payment | undefined;
+  payments: Payment[];
+  loading: boolean;
+
+  createPayment: (
+    orderId: string,
+    amount: number
+  ) => Promise<any>;
+
+  verifyPayment: (
+    payload: unknown
+  ) => Promise<Payment>;
+
+  getPaymentByOrderId: (
+    orderId: string
+  ) => Promise<Payment | null>;
+
+  refreshPayments: () => Promise<void>;
 }
 
-const PaymentContext = createContext<PaymentContextType | undefined>(undefined);
+const PaymentContext =
+  createContext<PaymentContextType | null>(
+    null
+  );
 
-export function PaymentProvider({ children }: { children: React.ReactNode }) {
-	const [payments, setPayments] = useState<Payment[]>([]);
+export function PaymentProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [payments, setPayments] =
+    useState<Payment[]>([]);
 
-	const addPayment = (
-		orderId: string,
-		amount: number,
-		transactionId: string,
-		lastFour: string
-	): Payment => {
-		const newPayment: Payment = {
-			id: `PAY-${Date.now()}`,
-			orderId,
-			amount,
-			status: "completed",
-			transactionId,
-			lastFour,
-			createdAt: new Date(),
-		};
-		setPayments((prev) => [newPayment, ...prev]);
-		return newPayment;
-	};
+  const [loading, setLoading] =
+    useState(false);
 
-	const updatePaymentStatus = (paymentId: string, status: Payment["status"]) => {
-		setPayments((prev) =>
-			prev.map((payment) =>
-				payment.id === paymentId ? { ...payment, status } : payment
-			)
-		);
-	};
+  const refreshPayments =
+    useCallback(async () => {
+      try {
+        setLoading(true);
 
-	const getPaymentByOrderId = (orderId: string) => {
-		return payments.find((payment) => payment.orderId === orderId);
-	};
+        const response =
+          await paymentsService.getAll();
 
-	return (
-		<PaymentContext.Provider
-			value={{
-				payments,
-				addPayment,
-				updatePaymentStatus,
-				getPaymentByOrderId,
-			}}
-		>
-			{children}
-		</PaymentContext.Provider>
-	);
+        setPayments(
+          response.data ?? []
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, []);
+
+  const createPayment =
+    useCallback(
+      async (
+        orderId: string,
+        amount: number
+      ) => {
+        return paymentsService.createOrder(
+          orderId,
+          amount
+        );
+      },
+      []
+    );
+
+  const verifyPayment =
+    useCallback(
+      async (
+        payload: unknown
+      ) => {
+        const response =
+          await paymentsService.verify(
+            payload
+          );
+
+        const payment =
+          response.data;
+
+        setPayments(
+          (prev) => [
+            payment,
+            ...prev.filter(
+              (p) =>
+                p.id !== payment.id
+            ),
+          ]
+        );
+
+        return payment;
+      },
+      []
+    );
+
+  const getPaymentByOrderId =
+    useCallback(
+      async (
+        orderId: string
+      ) => {
+        try {
+          const response =
+            await paymentsService.getByOrderId(
+              orderId
+            );
+
+          return (
+            response.data ??
+            null
+          );
+        } catch {
+          return null;
+        }
+      },
+      []
+    );
+
+  const value = useMemo(
+    () => ({
+      payments,
+      loading,
+      createPayment,
+      verifyPayment,
+      getPaymentByOrderId,
+      refreshPayments,
+    }),
+    [
+      payments,
+      loading,
+      createPayment,
+      verifyPayment,
+      getPaymentByOrderId,
+      refreshPayments,
+    ]
+  );
+
+  return (
+    <PaymentContext.Provider
+      value={value}
+    >
+      {children}
+    </PaymentContext.Provider>
+  );
 }
 
 export function usePayment() {
-	const context = useContext(PaymentContext);
-	if (!context) {
-		throw new Error("usePayment must be used within PaymentProvider");
-	}
-	return context;
+  const context =
+    useContext(
+      PaymentContext
+    );
+
+  if (!context) {
+    throw new Error(
+      "usePayment must be used within PaymentProvider"
+    );
+  }
+
+  return context;
 }
