@@ -36,7 +36,7 @@ const orderRouter = express.Router();
  *                 data:
  *                   type: object
  *                   properties:
- *                     order: { $ref: '#/components/schemas/Order' }
+ *                     orderId: { type: string }
  *                     razorpayOrderId: { type: string }
  *                     amount: { type: number }
  *                     currency: { type: string, example: INR }
@@ -237,7 +237,7 @@ orderRouter.get('/:id', auth, orderController.getOrderById);
  *       404:
  *         description: Order not found
  */
-orderRouter.patch('/:id/status', auth, isAdmin, orderController.updateOrderStatus);
+orderRouter.patch('/:id/status', auth, orderController.updateOrderStatus);
 
 /**
  * @swagger

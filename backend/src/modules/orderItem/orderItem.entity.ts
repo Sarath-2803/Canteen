@@ -35,7 +35,8 @@ OrderItem.init({
     },
     subtotal: {
         type: DataTypes.DECIMAL(10, 2),
-        allowNull: false
+        allowNull: false,
+        field: "subTotal"
     }
 }, {
     sequelize,

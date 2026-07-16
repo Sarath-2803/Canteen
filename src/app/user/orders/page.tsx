@@ -69,10 +69,10 @@ export default function UserOrdersPage() {
 
       <div className="space-y-4">
         {orders.map((order) => (
-          <div key={order.id} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition">
+          <div key={order.orderId} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="font-semibold text-gray-900 text-lg">Order #{order.id.slice(0, 8)}</p>
+                <p className="font-semibold text-gray-900 text-lg">Order #{order.orderId}</p>
                 <p className="text-sm text-gray-500 mt-1">
                   {new Date(order.createdAt).toLocaleString('en-IN', {
                     dateStyle: 'medium',
@@ -83,9 +83,9 @@ export default function UserOrdersPage() {
 
               <span
                 className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                  order.status === "pending"
+                  order.status === "PENDING"
                     ? "bg-yellow-100 text-yellow-700"
-                    : order.status === "completed"
+                    : order.status === "CONFIRMED"
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                 }`}
@@ -120,14 +120,14 @@ export default function UserOrdersPage() {
 
               <div className="flex gap-3">
                 <a
-                  href={`/orders/${order.id}`}
+                  href={`/orders/${order.orderId}`}
                   className="text-sm bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 font-medium transition"
                 >
                   View Details
                 </a>
                 {canCancel(order) && (
                   <button
-                    onClick={() => handleCancelOrder(order.id)}
+                    onClick={() => handleCancelOrder(order.orderId)}
                     className="text-sm bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 font-medium transition"
                   >
                     Cancel Order
@@ -137,7 +137,7 @@ export default function UserOrdersPage() {
             </div>
 
             {/* Cancellation Status Messages */}
-            {order.status === "pending" && (
+            {order.status === "PENDING" && (
               <p className="text-xs text-yellow-700 mt-3 flex items-center bg-yellow-50 p-2 rounded">
                 <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />

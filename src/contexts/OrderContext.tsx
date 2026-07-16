@@ -143,6 +143,8 @@ export function OrderProvider({
           const order =
             response.data;
 
+            // console.log("Order created:", order);
+
           setOrders((prev) => [
             order,
             ...prev,
@@ -174,7 +176,7 @@ export function OrderProvider({
 
         setOrders((prev) =>
           prev.map((order) =>
-            order.id === orderId
+            order.orderId === orderId
               ? {
                   ...order,
                   status,
@@ -193,7 +195,7 @@ export function OrderProvider({
       ) => {
         await updateOrderStatus(
           orderId,
-          "cancelled"
+          "CANCELLED"
         );
       },
       [
@@ -213,7 +215,7 @@ export function OrderProvider({
         setOrders((prev) =>
           prev.filter(
             (order) =>
-              order.id !==
+              order.orderId !==
               orderId
           )
         );
@@ -228,7 +230,7 @@ export function OrderProvider({
       ) =>
         orders.find(
           (order) =>
-            order.id ===
+            order.orderId ===
             orderId
         ),
       [orders]

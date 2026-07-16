@@ -11,12 +11,13 @@ import orderItemRepository from '../orderItem/orderItem.repository.js';
 import paymentRepository from '../payment/payment.repository.js';
 import CartItem from '../cartItem/cartItem.entity.js';
 import razorpay from '../../config/razorpay.js';
+import paymentService from '../payment/payment.service.js';
 
 const toOrderDto = (order: Order): OrderDto => order.toJSON() as OrderDto;
 
 // Checkout
 export interface CheckoutResult {
-  order: OrderDto;
+  orderId: string;
   razorpayOrderId: string;
   amount: number;
   currency: string;
@@ -48,70 +49,65 @@ const checkout = async (userId: string, paymentMethod: string): Promise<Checkout
   }
 
   // calculate total
-    const totalAmount = cartItems.reduce((sum, cartItem) => {
-        const item = (cartItem as any).item as Item;
-        return sum + item.price * cartItem.quantity;
-    }, 0);
+  const totalAmount = cartItems.reduce((sum, cartItem) => {
+    const item = (cartItem as any).item as Item;
+    return sum + item.price * cartItem.quantity;
+  }, 0);
 
   // transaction
   const transaction = await sequelize.transaction();
 
   try {
     // a. create order
-        const order = await orderRepository.create(
-            { userId, totalAmount } as CreateOrderDto,
-            transaction
-        );
+    const order = await orderRepository.create(
+      { userId, totalAmount } as CreateOrderDto,
+      transaction
+    );
 
-        // b. create order items + deduct stock
-        for (const cartItem of cartItems) {
-            const item = (cartItem as any).item as Item;
 
-            await orderItemRepository.create({
-                orderId: order.orderId,
-                itemId: cartItem.itemId,
-                quantity: cartItem.quantity,
-                unitPrice: item.price,
-                subtotal: item.price * cartItem.quantity,
-            }, transaction);
+    // b. create order items + deduct stock
+    for (const cartItem of cartItems) {
+      const item = (cartItem as any).item as Item;
 
-            // deduct stock
-            await item.update(
-                { stockQuantity: item.stockQuantity - cartItem.quantity },
-                { transaction }
-            );
-        }
+      await orderItemRepository.create({
+        orderId: order.orderId,
+        itemId: cartItem.itemId,
+        quantity: cartItem.quantity,
+        unitPrice: item.price,
+        subtotal: item.price * cartItem.quantity,
+      }, transaction);
 
-        // c. create payment record
-        await paymentRepository.create({
-            orderId: order.orderId,
-            userId,
-            amount: totalAmount,
-            paymentMethod: paymentMethod as any,
-            paymentStatus: 'PENDING',
-        }, transaction);
+      // deduct stock
+      // await item.update(
+      //     { stockQuantity: item.stockQuantity - cartItem.quantity },
+      //     { transaction }
+      // );
+    }
 
-        // d. clear cart items
-        await CartItem.destroy({ where: { cartId: cart.cartId }, transaction });
+    // // c. create payment record
+    // await paymentRepository.create({
+    //     orderId: order.orderId,
+    //     userId,
+    //     amount: totalAmount,
+    //     paymentMethod: paymentMethod as any,
+    //     paymentStatus: 'PENDING',
+    // }, transaction);
 
-        // commit transaction
-        await transaction.commit();
+    // d. clear cart items
+    await CartItem.destroy({ where: { cartId: cart.cartId }, transaction });
 
-        // 6. create razorpay order (outside transaction — external API call)
-        const razorpayOrder = await razorpay.orders.create({
-            amount: Math.round(totalAmount * 100), // paise
-            currency: 'INR',
-            receipt: order.orderId,
-            notes: { orderId: order.orderId, userId },
-        });
+    // 6. create razorpay order (outside transaction — external API call)
+    const razorpayOrder = await paymentService.createRazorpayOrder(totalAmount, order.orderId);
 
-        return {
-            order: toOrderDto(order),
-            razorpayOrderId: razorpayOrder.id,
-            amount: Number(razorpayOrder.amount),
-            currency: razorpayOrder.currency,
-            keyId: process.env.RAZORPAY_KEY_ID,
-        };
+    await transaction.commit();
+
+    return {
+      orderId: order.orderId,
+      razorpayOrderId: razorpayOrder.razorpayOrderId,
+      amount: razorpayOrder.amount as number,
+      currency: razorpayOrder.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+    };
 
   } catch (error) {
     await transaction.rollback();

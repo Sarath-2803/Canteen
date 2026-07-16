@@ -8,7 +8,7 @@ import {
   useMemo,
 } from "react";
 
-import { Payment } from "@/lib/types";
+import { Payment, RazorpayOrderResponse, VerifyPaymentRequest } from "@/lib/types";
 import { paymentsService } from "@/services/payments";
 
 interface PaymentContextType {
@@ -18,10 +18,10 @@ interface PaymentContextType {
   createPayment: (
     orderId: string,
     amount: number
-  ) => Promise<unknown>;
+  ) => Promise<RazorpayOrderResponse>;
 
   verifyPayment: (
-    payload: unknown
+    payload: VerifyPaymentRequest
   ) => Promise<Payment>;
 
   getPaymentByOrderId: (
@@ -32,9 +32,7 @@ interface PaymentContextType {
 }
 
 const PaymentContext =
-  createContext<PaymentContextType | null>(
-    null
-  );
+  createContext<PaymentContextType | null>(null);
 
 export function PaymentProvider({
   children,
@@ -55,33 +53,39 @@ export function PaymentProvider({
         const response =
           await paymentsService.getAll();
 
-        setPayments(
-          response.data ?? []
+        setPayments(response.data ?? []);
+      } catch (error) {
+        console.error(
+          "Failed to fetch payments:",
+          error
         );
       } finally {
         setLoading(false);
       }
     }, []);
 
-  const createPayment =
-    useCallback(
-      async (
+ const createPayment = useCallback(
+    async (
         orderId: string,
         amount: number
-      ) => {
-        return paymentsService.createOrder(
-          orderId,
-          amount
-        );
-      },
-      []
-    );
+    ): Promise<RazorpayOrderResponse> => {
+      console.log("Creating payment for order:", orderId, "with amount:", amount);
+        const response =
+            await paymentsService.createOrder(
+                orderId,
+                amount
+            );
+
+        return response.data;
+    },
+    []
+);
 
   const verifyPayment =
     useCallback(
       async (
-        payload: unknown
-      ) => {
+        payload: VerifyPaymentRequest
+      ): Promise<Payment> => {
         const response =
           await paymentsService.verify(
             payload
@@ -90,15 +94,12 @@ export function PaymentProvider({
         const payment =
           response.data;
 
-        setPayments(
-          (prev) => [
-            payment,
-            ...prev.filter(
-              (p) =>
-                p.id !== payment.id
-            ),
-          ]
-        );
+        setPayments((prev) => [
+          payment,
+          ...prev.filter(
+            (p) => p.id !== payment.id
+          ),
+        ]);
 
         return payment;
       },
@@ -109,18 +110,20 @@ export function PaymentProvider({
     useCallback(
       async (
         orderId: string
-      ) => {
+      ): Promise<Payment | null> => {
         try {
           const response =
             await paymentsService.getByOrderId(
               orderId
             );
 
-          return (
-            response.data ??
-            null
+          return response.data ?? null;
+        } catch (error) {
+          console.error(
+            "Failed to fetch payment:",
+            error
           );
-        } catch {
+
           return null;
         }
       },
@@ -157,9 +160,7 @@ export function PaymentProvider({
 
 export function usePayment() {
   const context =
-    useContext(
-      PaymentContext
-    );
+    useContext(PaymentContext);
 
   if (!context) {
     throw new Error(

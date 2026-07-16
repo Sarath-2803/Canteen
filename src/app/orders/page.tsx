@@ -25,13 +25,13 @@ export default function OrdersPage() {
 		status: OrderStatus
 	) => {
 		switch (status) {
-			case "completed":
+			case "CONFIRMED":
 				return "bg-green-100 text-green-800";
 
-			case "pending":
+			case "PENDING":
 				return "bg-yellow-100 text-yellow-800";
 
-			case "cancelled":
+			case "CANCELLED":
 				return "bg-red-100 text-red-800";
 
 			default:
@@ -42,8 +42,8 @@ export default function OrdersPage() {
 	const canCancel = (
 		order: Order
 	) =>
-		order.status === "pending" ||
-		order.status === "confirmed";
+		order.status === "PENDING" ||
+		order.status === "CONFIRMED";
 
 	if (loading) {
 		return (
@@ -89,7 +89,7 @@ export default function OrdersPage() {
 							(order) => (
 								<div
 									key={
-										order.id
+										order.orderId
 									}
 									className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
 								>
@@ -97,10 +97,7 @@ export default function OrdersPage() {
 										<div>
 											<h3 className="text-lg font-semibold text-gray-900">
 												Order #
-												{order.id.slice(
-													0,
-													8
-												)}
+												{order.orderId}
 											</h3>
 
 											<p className="text-sm text-gray-600">
@@ -136,7 +133,7 @@ export default function OrdersPage() {
 													) => (
 														<div
 															key={
-																item.id
+																item.itemId
 															}
 															className="flex justify-between text-sm text-gray-600"
 														>
@@ -200,7 +197,7 @@ export default function OrdersPage() {
 										<button
 											onClick={() =>
 												router.push(
-													`/orders/${order.id}`
+													`/orders/${order.orderId}`
 												)
 											}
 											className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-sm"
@@ -223,7 +220,7 @@ export default function OrdersPage() {
 														)
 													) {
 														await cancelOrder(
-															order.id
+															order.orderId
 														);
 													}
 												}}
@@ -245,7 +242,7 @@ export default function OrdersPage() {
 													)
 												) {
 													await deleteOrder(
-														order.id
+														order.orderId
 													);
 												}
 											}}

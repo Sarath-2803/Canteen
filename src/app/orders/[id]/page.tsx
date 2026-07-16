@@ -78,20 +78,20 @@ export default function OrderDetailsPage() {
 
             try {
                 await cancelOrder(
-                    order.id
+                    order.orderId
                 );
 
                 setOrder({
                     ...order,
                     status:
-                        "cancelled",
+                        "CANCELLED",
                 });
 
                 alert(
                     "Order cancelled successfully."
                 );
             } catch (
-                error: unknown
+            error: unknown
             ) {
                 console.error(
                     error
@@ -110,17 +110,17 @@ export default function OrderDetailsPage() {
             const content = `
 ORDER RECEIPT
 
-Order ID: ${order.id}
+Order ID: ${order.orderId}
 Date: ${new Date(order.createdAt).toLocaleString()}
 
 Items:
 ${order.items?.map(
-        (
-            item
-        ) =>
-            `${item.itemName} x${item.quantity} = ₹${item.unitPrice * item.quantity}`
-    )
-    .join("\n")}
+                (
+                    item
+                ) =>
+                    `${item.itemName} x${item.quantity} = ₹${item.unitPrice * item.quantity}`
+            )
+                    .join("\n")}
 
 Total: ₹${order.totalAmount}
 
@@ -148,7 +148,7 @@ Thank you for your order.
                 );
 
             a.href = url;
-            a.download = `receipt-${order.id}.txt`;
+            a.download = `receipt-${order.orderId}.txt`;
 
             document.body.appendChild(
                 a
@@ -215,7 +215,7 @@ Thank you for your order.
 
                 <div className="bg-white rounded-lg shadow p-6">
                     <h1 className="text-2xl font-bold mb-6">
-                        Order #{order.id}
+                        Order #{order.orderId}
                     </h1>
 
                     <div className="grid grid-cols-2 gap-4 mb-8">
@@ -266,7 +266,7 @@ Thank you for your order.
                             ) => (
                                 <div
                                     key={
-                                        item.id
+                                        item.itemId
                                     }
                                     className="flex justify-between bg-gray-50 p-3 rounded"
                                 >
@@ -320,15 +320,15 @@ Thank you for your order.
                         {canCancel(
                             order.status
                         ) && (
-                            <button
-                                onClick={
-                                    handleCancelOrder
-                                }
-                                className="flex-1 bg-red-500 text-white py-2 rounded-lg"
-                            >
-                                Cancel
-                            </button>
-                        )}
+                                <button
+                                    onClick={
+                                        handleCancelOrder
+                                    }
+                                    className="flex-1 bg-red-500 text-white py-2 rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                            )}
                     </div>
                 </div>
             </main>

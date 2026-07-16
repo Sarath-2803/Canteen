@@ -148,21 +148,29 @@ export interface AddToCartRequest {
 // ====================
 
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "preparing"
-  | "ready"
-  | "completed"
-  | "cancelled";
+  | "PENDING"
+  | "CONFIRMED"
+  | "CANCELLED";
 
 export interface Order {
-  id: string;
+  orderId: string;
   userId: string;
   totalAmount: number;
   status: OrderStatus;
   items?: OrderItem[];
+  razorpayOrderId?: string;
+  currency?: string;
+  keyId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface OrderCheckout {
+  orderId: string;
+  razorpayOrderId?: string;
+  amount: number;
+  currency: string;
+  keyId: string;
 }
 
 export interface OrderItem {
@@ -176,10 +184,13 @@ export interface OrderItem {
   item?: Item;
 }
 
-export interface CheckoutRequest {
-  paymentMethod: string;
+export interface CheckoutResult {
+	order: Order;
+	razorpayOrderId: string;
+	amount: number;
+	currency: string;
+	keyId: string;
 }
-
 
 // ====================
 // PAYMENT TYPES
@@ -212,10 +223,18 @@ export interface RazorpayOrderResponse {
   receipt: string;
 }
 
+export interface RazorpayPaymentSuccessResponse {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+}
+
 export interface VerifyPaymentRequest {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+  userId: string;
+  orderId: string;
 }
 
 export interface TestCard {

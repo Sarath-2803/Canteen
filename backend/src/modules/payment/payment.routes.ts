@@ -59,12 +59,11 @@ paymentRouter.post('/create-order', auth, paymentController.createRazorpayOrder)
  *         application/json:
  *           schema:
  *             type: object
- *             required: [razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentId]
+ *             required: [razorpayOrderId, razorpayPaymentId, razorpaySignature]
  *             properties:
  *               razorpayOrderId: { type: string, description: Razorpay order ID }
  *               razorpayPaymentId: { type: string, description: Razorpay payment ID }
  *               razorpaySignature: { type: string, description: Razorpay signature }
- *               paymentId: { type: string, format: uuid, description: Your DB payment UUID }
  *     responses:
  *       200:
  *         description: Payment verified, order confirmed
