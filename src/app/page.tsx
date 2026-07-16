@@ -277,7 +277,7 @@ export default function Home() {
 															0 ||
 														!available
 													}
-													className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
+													className="w-8 h-8 rounded-full bg-gray-200 text-black hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
 												>
 													-
 												</button>
@@ -298,7 +298,7 @@ export default function Home() {
 													disabled={
 														!available
 													}
-													className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
+													className="w-8 h-8 rounded-full bg-gray-200 text-black hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
 												>
 													+
 												</button>

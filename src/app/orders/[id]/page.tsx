@@ -1,337 +1,392 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+	useCallback,
+	useEffect,
+	useState,
+} from "react";
+
+import {
+	useParams,
+	useRouter,
+	useSearchParams,
+} from "next/navigation";
 
 import Header from "@/components/Header";
 
-import { useOrder } from "@/contexts/OrderContext";
+import {
+	OrderItem,
+} from "@/lib/types";
 
-import { ordersService } from "@/services/orders";
+import {
+	orderItemsService,
+} from "@/services/orderItems";
 
-import { Order } from "@/lib/types";
 
 export default function OrderDetailsPage() {
-    const router = useRouter();
 
-    const params = useParams();
-    const searchParams = useSearchParams();
+	const router = useRouter();
 
-    const orderId = params.id as string;
+	const params =
+		useParams<{ id: string }>();
 
-    const paymentSuccess =
-        searchParams.get("payment") === "success";
+	const searchParams =
+		useSearchParams();
 
-    const {
-        cancelOrder,
-    } = useOrder();
 
-    const [order, setOrder] =
-        useState<Order | null>(null);
+	const orderId = params.id;
 
-    const [loading, setLoading] =
-        useState(true);
 
-    const loadOrder = useCallback(async () => {
-        try {
-            setLoading(true);
+	const paymentSuccess =
+		searchParams.get("payment") === "success";
 
-            const response =
-                await ordersService.getById(
-                    orderId
-                );
 
-            setOrder(
-                response.data
-            );
-        } catch (error) {
-            console.error(
-                "Failed to fetch order:",
-                error
-            );
-        } finally {
-            setLoading(false);
-        }
-    }, [orderId]);
+	const [
+		orderItems,
+		setOrderItems
+	] = useState<OrderItem[]>([]);
 
-    useEffect(() => {
-        if (orderId) {
-            loadOrder();
-        }
-    }, [loadOrder, orderId]);
 
-    const canCancel = (
-        status: string
-    ) => status === "pending";
+	const [
+		loading,
+		setLoading
+	] = useState(true);
 
-    const handleCancelOrder =
-        async () => {
-            if (!order) return;
 
-            if (
-                !confirm(
-                    "Are you sure you want to cancel this order?"
-                )
-            ) {
-                return;
-            }
 
-            try {
-                await cancelOrder(
-                    order.orderId
-                );
+	const loadOrder =
+		useCallback(async () => {
 
-                setOrder({
-                    ...order,
-                    status:
-                        "CANCELLED",
-                });
+			try {
 
-                alert(
-                    "Order cancelled successfully."
-                );
-            } catch (
-            error: unknown
-            ) {
-                console.error(
-                    error
-                );
+				setLoading(true);
 
-                alert(
-                    "Failed to cancel order."
-                );
-            }
-        };
+				const response =
+					await orderItemsService.getByOrderId(
+						orderId
+					);
 
-    const downloadReceipt =
-        () => {
-            if (!order) return;
 
-            const content = `
+				setOrderItems(
+					response.data
+				);
+
+
+				console.log(
+					"Order items:",
+					response.data
+				);
+
+
+			} catch(error) {
+
+				console.error(
+					"Failed to fetch order items:",
+					error
+				);
+
+			} finally {
+
+				setLoading(false);
+
+			}
+
+		},[orderId]);
+
+
+
+	useEffect(() => {
+
+		if(orderId) {
+			loadOrder();
+		}
+
+	},[
+		orderId,
+		loadOrder
+	]);
+
+
+
+	const totalAmount =
+		orderItems.reduce(
+			(sum,item)=>
+				sum + Number(item.subtotal),
+			0
+		);
+
+
+
+	const downloadReceipt = () => {
+
+
+		const content = `
+
 ORDER RECEIPT
 
-Order ID: ${order.orderId}
-Date: ${new Date(order.createdAt).toLocaleString()}
+Order ID:
+${orderId}
+
 
 Items:
-${order.items?.map(
-                (
-                    item
-                ) =>
-                    `${item.itemName} x${item.quantity} = ₹${item.unitPrice * item.quantity}`
-            )
-                    .join("\n")}
 
-Total: ₹${order.totalAmount}
+${orderItems
+	.map(
+		item =>
+`${item.itemName} x${item.quantity} = ₹${item.subtotal}`
+	)
+	.join("\n")}
 
-Status: ${order.status}
+
+Total:
+₹${totalAmount}
+
 
 Thank you for your order.
+
 `;
 
-            const blob =
-                new Blob(
-                    [content],
-                    {
-                        type: "text/plain",
-                    }
-                );
 
-            const url =
-                URL.createObjectURL(
-                    blob
-                );
 
-            const a =
-                document.createElement(
-                    "a"
-                );
+		const blob =
+			new Blob(
+				[
+					content
+				],
+				{
+					type:"text/plain"
+				}
+			);
 
-            a.href = url;
-            a.download = `receipt-${order.orderId}.txt`;
 
-            document.body.appendChild(
-                a
-            );
 
-            a.click();
+		const url =
+			URL.createObjectURL(
+				blob
+			);
 
-            document.body.removeChild(
-                a
-            );
 
-            URL.revokeObjectURL(
-                url
-            );
-        };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50">
-                <Header />
+		const link =
+			document.createElement(
+				"a"
+			);
 
-                <div className="flex justify-center py-20">
-                    Loading order...
-                </div>
-            </div>
-        );
-    }
 
-    if (!order) {
-        return (
-            <div className="min-h-screen bg-gray-50">
-                <Header />
+		link.href=url;
 
-                <main className="max-w-2xl mx-auto px-4 py-8">
-                    <p className="text-center text-gray-600">
-                        Order not found
-                    </p>
+		link.download =
+			`receipt-${orderId}.txt`;
 
-                    <button
-                        onClick={() =>
-                            router.push(
-                                "/user/orders"
-                            )
-                        }
-                        className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg"
-                    >
-                        Back to Orders
-                    </button>
-                </main>
-            </div>
-        );
-    }
 
-    return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
+		document.body.appendChild(
+			link
+		);
 
-            <main className="max-w-2xl mx-auto px-4 py-8">
-                {paymentSuccess && (
-                    <div className="bg-green-100 border border-green-300 text-green-700 p-4 rounded mb-6">
-                        Payment successful!
-                    </div>
-                )}
 
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h1 className="text-2xl font-bold mb-6">
-                        Order #{order.orderId}
-                    </h1>
+		link.click();
 
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div>
-                            <p className="text-gray-500">
-                                Status
-                            </p>
 
-                            <p className="font-semibold capitalize">
-                                {order.status}
-                            </p>
-                        </div>
+		document.body.removeChild(
+			link
+		);
 
-                        <div>
-                            <p className="text-gray-500">
-                                Date
-                            </p>
 
-                            <p>
-                                {new Date(
-                                    order.createdAt
-                                ).toLocaleDateString()}
-                            </p>
-                        </div>
+		URL.revokeObjectURL(
+			url
+		);
 
-                        <div>
-                            <p className="text-gray-500">
-                                Total
-                            </p>
+	};
 
-                            <p className="font-semibold">
-                                ₹
-                                {
-                                    order.totalAmount
-                                }
-                            </p>
-                        </div>
-                    </div>
 
-                    <h2 className="text-xl font-semibold mb-4">
-                        Items
-                    </h2>
 
-                    <div className="space-y-3">
-                        {order.items?.map(
-                            (
-                                item
-                            ) => (
-                                <div
-                                    key={
-                                        item.itemId
-                                    }
-                                    className="flex justify-between bg-gray-50 p-3 rounded"
-                                >
-                                    <div>
-                                        <p className="font-medium">
-                                            {
-                                                item.itemName
-                                            }
-                                        </p>
+	if(loading) {
 
-                                        <p className="text-sm text-gray-500">
-                                            Qty:
-                                            {" "}
-                                            {
-                                                item.quantity
-                                            }
-                                        </p>
-                                    </div>
+		return (
+			<div className="min-h-screen bg-gray-50">
 
-                                    <p>
-                                        ₹
-                                        {item.unitPrice *
-                                            item.quantity}
-                                    </p>
-                                </div>
-                            )
-                        )}
-                    </div>
+				<Header />
 
-                    <div className="mt-8 flex gap-2">
-                        <button
-                            onClick={() =>
-                                router.push(
-                                    "/user/orders"
-                                )
-                            }
-                            className="flex-1 bg-gray-500 text-white py-2 rounded-lg"
-                        >
-                            Back
-                        </button>
+				<div className="flex justify-center py-20">
+					Loading order...
+				</div>
 
-                        <button
-                            onClick={
-                                downloadReceipt
-                            }
-                            className="flex-1 bg-blue-500 text-white py-2 rounded-lg"
-                        >
-                            Receipt
-                        </button>
+			</div>
+		);
 
-                        {canCancel(
-                            order.status
-                        ) && (
-                                <button
-                                    onClick={
-                                        handleCancelOrder
-                                    }
-                                    className="flex-1 bg-red-500 text-white py-2 rounded-lg"
-                                >
-                                    Cancel
-                                </button>
-                            )}
-                    </div>
-                </div>
-            </main>
-        </div>
-    );
+	}
+
+
+
+	if(orderItems.length===0) {
+
+		return (
+
+			<div className="min-h-screen bg-gray-50">
+
+				<Header />
+
+				<main className="max-w-2xl mx-auto px-4 py-8">
+
+					<p className="text-center text-gray-600">
+						Order not found
+					</p>
+
+
+					<button
+						onClick={()=>
+							router.push(
+								"/user/orders"
+							)
+						}
+						className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg"
+					>
+						Back to Orders
+					</button>
+
+				</main>
+
+			</div>
+
+		);
+
+	}
+
+
+
+	return (
+
+		<div className="min-h-screen bg-gray-50">
+
+			<Header />
+
+
+			<main className="max-w-2xl mx-auto px-4 py-8">
+
+
+				{
+					paymentSuccess && (
+
+						<div className="bg-green-100 border border-green-300 text-green-700 p-4 rounded mb-6">
+
+							Payment successful!
+
+						</div>
+
+					)
+
+				}
+
+
+
+				<div className="bg-white rounded-lg shadow p-6">
+
+
+					<h1 className="text-2xl font-bold mb-6 text-gray-900">
+						Order #{orderId}
+					</h1>
+
+
+
+					<h2 className="text-xl font-semibold mb-4 text-gray-900">
+						Items
+					</h2>
+
+
+
+					<div className="space-y-3">
+
+						{
+							orderItems.map(
+								item=>(
+
+									<div
+										key={
+											item.itemId
+										}
+										className="flex justify-between bg-gray-50 p-3 rounded"
+									>
+
+										<div>
+
+											<p className="font-medium text-gray-800">
+												{item.itemName}
+											</p>
+
+
+											<p className="text-sm text-gray-500">
+												Qty: {item.quantity}
+											</p>
+
+										</div>
+
+
+
+										<p className="font-semibold text-gray-900">
+
+											₹{item.subtotal}
+
+										</p>
+
+
+									</div>
+
+								)
+							)
+						}
+
+					</div>
+
+
+
+					<div className="border-t mt-6 pt-4">
+
+						<p className="text-xl font-bold text-gray-900">
+							Total: ₹{totalAmount}
+						</p>
+
+					</div>
+
+
+
+
+					<div className="mt-8 flex gap-2">
+
+
+						<button
+							onClick={()=>
+								router.push(
+									"/user/orders"
+								)
+							}
+							className="flex-1 bg-gray-500 text-white py-2 rounded-lg"
+						>
+							Back
+						</button>
+
+
+
+						<button
+							onClick={
+								downloadReceipt
+							}
+							className="flex-1 bg-blue-500 text-white py-2 rounded-lg"
+						>
+							Receipt
+						</button>
+
+
+					</div>
+
+
+				</div>
+
+
+			</main>
+
+
+		</div>
+
+	);
+
 }

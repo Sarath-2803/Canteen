@@ -2,6 +2,7 @@ import { CreateOrderItemDto, UpdateOrderItemDto } from "./orderItem.dto.js";
 import OrderItem from "./orderItem.entity.js";
 import { Order as Order_, Transaction } from "sequelize";
 import { PaginationOptions, PaginatedResult } from "../../utils/pagination.js";
+import Item from "../item/item.entity.js";
 
 class OrderItemRepository {
     async create(data: CreateOrderItemDto, transaction?: Transaction): Promise<OrderItem> {
@@ -10,12 +11,12 @@ class OrderItemRepository {
     }
 
     async findAll(options: PaginationOptions = {}): Promise<PaginatedResult<OrderItem>> {
-        const { 
+        const {
             page = 1,
-            limit = 10, 
-            sortBy = "orderItemId", 
+            limit = 10,
+            sortBy = "orderItemId",
             sortOrder = "ASC"
-         } = options;
+        } = options;
 
         const offset = (page - 1) * limit;
         const order: Order_ = [[sortBy as string, sortOrder]];
@@ -40,7 +41,18 @@ class OrderItemRepository {
     }
 
     async findAllByOrderId(orderId: string): Promise<OrderItem[]> {
-        return await OrderItem.findAll({ where: { orderId } });
+        return await OrderItem.findAll({
+            where: { orderId },
+            include: [
+                {
+                    model: Item,
+                    as: "item",
+                    attributes: [
+                        "itemName"
+                    ]
+                }
+            ]
+        });
     }
 
     async findAllByItemId(itemId: string): Promise<OrderItem[]> {

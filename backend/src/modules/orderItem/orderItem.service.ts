@@ -3,6 +3,7 @@ import { NotFoundError } from '../../utils/errors.js';
 import type { CreateOrderItemDto, UpdateOrderItemDto, OrderItemDto } from './orderItem.dto.js';
 import orderItemRepository from './orderItem.repository.js';
 import type { PaginationOptions, PaginatedResult } from '../../utils/pagination.js';
+import itemRepository from '../item/item.repository.js';
 
 const toOrderItemDto = (orderItem: OrderItem): OrderItemDto => orderItem.toJSON() as OrderItemDto;
 
@@ -38,59 +39,68 @@ const getOrderItemById = async (id: string): Promise<OrderItemDto> => {
 /**
  * Get order items by order ID
  */
-const getOrderItemsByOrderId = async (orderId: string): Promise<OrderItemDto[]> => {
-  const orderItems = await orderItemRepository.findAllByOrderId(orderId);
-  return orderItems.map(toOrderItemDto);
+const getOrderItemsByOrderId = async (
+    orderId: string
+): Promise<OrderItemDto[]> => {
+
+    const orderItems =
+        await orderItemRepository.findAllByOrderId(orderId);
+
+    return orderItems.map((orderItem) => ({
+        ...orderItem.toJSON(),
+        itemName:
+            orderItem.item?.itemName ?? "Unknown Item"
+    }));
 };
 
-/**
- * Get order items by item ID
- */
-const getOrderItemsByItemId = async (itemId: string): Promise<OrderItemDto[]> => {
-  const orderItems = await orderItemRepository.findAllByItemId(itemId);
-  return orderItems.map(toOrderItemDto);
-};
+  /**
+   * Get order items by item ID
+   */
+  const getOrderItemsByItemId = async (itemId: string): Promise<OrderItemDto[]> => {
+    const orderItems = await orderItemRepository.findAllByItemId(itemId);
+    return orderItems.map(toOrderItemDto);
+  };
 
-/**
- * Update order item
- */
-const updateOrderItem = async (id: string, data: UpdateOrderItemDto): Promise<OrderItemDto> => {
-  const updatedOrderItem = await orderItemRepository.update(id, data);
-  if (!updatedOrderItem) {
-    throw new NotFoundError('Order item not found');
-  }
-  return toOrderItemDto(updatedOrderItem);
-};
+  /**
+   * Update order item
+   */
+  const updateOrderItem = async (id: string, data: UpdateOrderItemDto): Promise<OrderItemDto> => {
+    const updatedOrderItem = await orderItemRepository.update(id, data);
+    if (!updatedOrderItem) {
+      throw new NotFoundError('Order item not found');
+    }
+    return toOrderItemDto(updatedOrderItem);
+  };
 
-/**
- * Delete order item
- */
-const deleteOrderItem = async (id: string): Promise<{ message: string }> => {
-  const orderItem = await orderItemRepository.findById(id);
+  /**
+   * Delete order item
+   */
+  const deleteOrderItem = async (id: string): Promise<{ message: string }> => {
+    const orderItem = await orderItemRepository.findById(id);
 
-  if (!orderItem) {
-    throw new NotFoundError('Order item not found');
-  }
+    if (!orderItem) {
+      throw new NotFoundError('Order item not found');
+    }
 
-  await orderItemRepository.delete(id);
-  return { message: 'Order item deleted successfully' };
-};
+    await orderItemRepository.delete(id);
+    return { message: 'Order item deleted successfully' };
+  };
 
-/**
- * Delete all order items for an order
- */
-const deleteOrderItemsByOrderId = async (orderId: string): Promise<{ message: string }> => {
-  await orderItemRepository.deleteByOrderId(orderId);
-  return { message: 'Order items deleted successfully'};
-};
+  /**
+   * Delete all order items for an order
+   */
+  const deleteOrderItemsByOrderId = async (orderId: string): Promise<{ message: string }> => {
+    await orderItemRepository.deleteByOrderId(orderId);
+    return { message: 'Order items deleted successfully' };
+  };
 
-export default {
-  createOrderItem,
-  getAllOrderItems,
-  getOrderItemById,
-  getOrderItemsByOrderId,
-  getOrderItemsByItemId,
-  updateOrderItem,
-  deleteOrderItem,
-  deleteOrderItemsByOrderId,
-};
+  export default {
+    createOrderItem,
+    getAllOrderItems,
+    getOrderItemById,
+    getOrderItemsByOrderId,
+    getOrderItemsByItemId,
+    updateOrderItem,
+    deleteOrderItem,
+    deleteOrderItemsByOrderId,
+  };

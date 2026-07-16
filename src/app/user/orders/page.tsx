@@ -7,8 +7,9 @@ import Link from "next/link";
 
 export default function UserOrdersPage() {
   const { user } = useAuth();
-  const { orders, loading, cancelOrder, refreshOrders } = useOrder();
+  const { orders, page, totalPages, loading, cancelOrder, refreshOrders } = useOrder();
 
+  console.log("Orders:", orders); // Debugging line to check the orders data
   useEffect(() => {
     if (user) {
       refreshOrders();
@@ -17,7 +18,7 @@ export default function UserOrdersPage() {
   }, [user]);
 
   const canCancel = (order: { status: string }) => {
-    return order.status === "pending";
+    return order.status === "PENDING";
   };
 
   const handleCancelOrder = async (orderId: string) => {
@@ -45,7 +46,7 @@ export default function UserOrdersPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
         <button
-          onClick={refreshOrders}
+          onClick={() => refreshOrders()}
           className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,19 +83,18 @@ export default function UserOrdersPage() {
               </div>
 
               <span
-                className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                  order.status === "PENDING"
+                className={`px-4 py-1.5 rounded-full text-sm font-medium ${order.status === "PENDING"
                     ? "bg-yellow-100 text-yellow-700"
                     : order.status === "CONFIRMED"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
               >
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
             </div>
 
-            <div className="border-t border-gray-100 pt-4 mb-4">
+            {/* <div className="border-t border-gray-100 pt-4 mb-4">
               <p className="text-sm font-medium text-gray-700 mb-3">Order Items:</p>
               <div className="space-y-2">
                 {order.items && order.items.length > 0 ? (
@@ -110,12 +110,12 @@ export default function UserOrdersPage() {
                   <p className="text-sm text-gray-500 italic">No items available</p>
                 )}
               </div>
-            </div>
+            </div> */}
 
             <div className="flex justify-between items-center pt-4 border-t border-gray-100">
               <div>
                 <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="text-xl font-bold text-gray-900">₹{order.totalAmount.toFixed(2)}</p>
+                <p className="text-xl font-bold text-gray-900">₹{order.totalAmount}</p>
               </div>
 
               <div className="flex gap-3">
@@ -147,6 +147,28 @@ export default function UserOrdersPage() {
             )}
           </div>
         ))}
+      </div>
+
+      <div className="flex justify-center gap-2 mt-8">
+        <button
+          disabled={page === 1}
+          onClick={() => refreshOrders(page - 1)}
+          className="px-4 py-2 text-gray-800 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        <span className="px-4 py-2 text-gray-700">
+          Page {page} of {totalPages}
+        </span>
+
+        <button
+          disabled={page === totalPages}
+          onClick={() => refreshOrders(page + 1)}
+          className="px-4 py-2 text-gray-800 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

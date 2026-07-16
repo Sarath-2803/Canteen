@@ -41,8 +41,30 @@ class OrderRepository {
         return await Order.findByPk(id);
     }
 
-    async findAllByUserId(userId: string): Promise<Order[]> {
-        return await Order.findAll({ where: { userId } });
+    async findAllByUserId(options: PaginationOptions, userId: string): Promise<PaginatedResult<Order>> {
+        const { 
+            page = 1,
+            limit = 10, 
+            sortBy = "orderId", 
+            sortOrder = "ASC"
+         } = options;
+
+        const offset = (page - 1) * limit;
+        const order: Order_ = [[sortBy as string, sortOrder]];
+
+        const { count, rows } = await Order.findAndCountAll({
+            where: { userId },
+            limit,
+            offset,
+            order,
+        });
+        return {
+            data: rows,
+            total: count,
+            page,
+            limit,
+            totalPages: Math.ceil(count / limit)
+        };
     }
 
     async update(orderId: string, data: UpdateOrderDto, transaction?: Transaction): Promise<Order | null> {

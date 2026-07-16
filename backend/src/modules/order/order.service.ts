@@ -152,9 +152,12 @@ const getOrderById = async (id: string): Promise<OrderDto> => {
 /**
  * Get orders by user ID
  */
-const getOrdersByUserId = async (userId: string): Promise<OrderDto[]> => {
-  const orders = await orderRepository.findAllByUserId(userId);
-  return orders.map(toOrderDto);
+const getOrdersByUserId = async (options: PaginationOptions, userId: string): Promise<PaginatedResult<OrderDto>> => {
+  const orders = await orderRepository.findAllByUserId(options, userId);
+  return {
+    ...orders,
+    data: orders.data.map(toOrderDto)
+  };
 };
 
 /**

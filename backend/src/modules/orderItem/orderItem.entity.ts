@@ -1,5 +1,6 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from "sequelize";
 import sequelize from "../../config/database.js";
+import Item from "../item/item.entity.js";
 
 class OrderItem extends Model<InferAttributes<OrderItem>,InferCreationAttributes<OrderItem>>{
     declare orderItemId: CreationOptional<string>;
@@ -8,6 +9,7 @@ class OrderItem extends Model<InferAttributes<OrderItem>,InferCreationAttributes
     declare quantity: number;
     declare unitPrice: number;
     declare subtotal: number;
+    declare item?: Item;
 }
 
 OrderItem.init({

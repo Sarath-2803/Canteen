@@ -11,8 +11,8 @@ export const ordersService = {
   getById: (id: string) =>
     api.get<ApiResponse<Order>>(`/orders/${id}`),
 
-  getByUserId: (userId: string) =>
-    api.get<ApiResponse<Order[]>>(`/orders/user/${userId}`),
+  getByUserId: (userId: string, page: number = 1, limit: number = 10) =>
+    api.get<ApiResponse<PaginatedResponse<Order>>>(`/orders/user/${userId}?page=${page}&limit=${limit}`),
 
   updateStatus: (id: string, status: OrderStatus) =>
     api.patch<ApiResponse<Order>>(`/orders/${id}/status`, { status }),

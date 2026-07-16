@@ -72,12 +72,21 @@ const getOrderById = asyncHandler(async (req: Request, res: Response) => {
 //* Get orders by user ID
 const getOrdersByUserId = asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
+  const { page, limit, sortBy, sortOrder } = req.query;
 
   if (!userId) {
     throw new ValidationError('User ID is required');
   }
 
-  const orders = await orderService.getOrdersByUserId(userId as string);
+  const orders = await orderService.getOrdersByUserId(
+    {
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+      sortBy: sortBy as keyof Order,
+      sortOrder: sortOrder as 'ASC' | 'DESC',
+    },
+    userId as string
+  );
 
   res.status(200).json({
     success: true,

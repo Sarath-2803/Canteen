@@ -174,7 +174,7 @@ export interface OrderCheckout {
 }
 
 export interface OrderItem {
-  id: string;
+  orderItemId: string;
   orderId: string;
   itemId: string;
   itemName: string;

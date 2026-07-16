@@ -32,6 +32,7 @@ const swaggerDefinition = {
     { name: 'Carts', description: 'Shopping cart operations' },
     { name: 'Cart Items', description: 'Cart item operations' },
     { name: 'Orders', description: 'Order management' },
+    { name: 'Order Items', description: 'Order item operations' },
     { name: 'Payments', description: 'Payment processing' },
   ],
   components: {
@@ -197,6 +198,7 @@ const options = {
     './src/modules/cart/*.ts',
     './src/modules/cartItem/*.ts',
     './src/modules/order/*.ts',
+    './src/modules/orderItem/*.ts',
     './src/modules/payment/*.ts',
   ],
 };

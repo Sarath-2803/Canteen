@@ -286,7 +286,7 @@ export default function CheckoutPage() {
 						{/* ORDER SUMMARY */}
 
 						<div className="bg-white p-6 rounded-lg shadow">
-							<h2 className="text-xl font-semibold mb-4">
+							<h2 className="text-xl font-semibold mb-4 text-gray-900">
 								Order Summary
 							</h2>
 
@@ -326,7 +326,7 @@ export default function CheckoutPage() {
 								)}
 							</div>
 
-							<div className="border-t pt-4 text-xl font-bold">
+							<div className="border-t pt-4 text-xl font-bold text-gray-900">
 								Total: ₹
 								{totalAmount}
 							</div>
@@ -335,7 +335,7 @@ export default function CheckoutPage() {
 						{/* PAYMENT */}
 
 						<div className="bg-white p-6 rounded-lg shadow">
-							<h2 className="text-xl font-semibold mb-4">
+							<h2 className="text-xl font-semibold mb-4 text-gray-900">
 								Payment
 							</h2>
 
@@ -351,7 +351,7 @@ export default function CheckoutPage() {
 									</div>
 								)}
 
-								<div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+								{/* <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
 									<h3 className="font-semibold text-purple-900 mb-2">
 										UPI Payment via Razorpay
 									</h3>
@@ -364,7 +364,7 @@ export default function CheckoutPage() {
 										BHIM or any other UPI
 										app.
 									</p>
-								</div>
+								</div> */}
 
 								<button
 									type="submit"
@@ -374,6 +374,16 @@ export default function CheckoutPage() {
 									{loading
 										? "Processing Payment..."
 										: `Pay ₹${totalAmount}`}
+								</button>
+
+								<button
+									type="button"
+									onClick={() =>
+										router.push("/")
+									}
+									className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold"
+								>
+									Cancel
 								</button>
 							</form>
 						</div>

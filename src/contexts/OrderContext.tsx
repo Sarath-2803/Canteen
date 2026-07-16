@@ -24,6 +24,9 @@ interface OrderContextType {
   orders: Order[];
   loading: boolean;
 
+  page: number;
+  totalPages: number;
+
   currentOrderItems: CartItem[];
   currentOrderTotal: number;
 
@@ -48,7 +51,9 @@ interface OrderContextType {
     orderId: string
   ) => Order | undefined;
 
-  refreshOrders: () => Promise<void>;
+  refreshOrders: (
+    page?: number
+) => Promise<void>;
 }
 
 const OrderContext =
@@ -68,6 +73,9 @@ export function OrderProvider({
     Order[]
   >([]);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [loading, setLoading] =
     useState(false);
 
@@ -82,43 +90,63 @@ export function OrderProvider({
         (sum, item) =>
           sum +
           (item.item?.price ?? 0) *
-            item.quantity,
+          item.quantity,
         0
       ),
     [cart]
   );
 
   const refreshOrders =
-    useCallback(async () => {
-      if (!user?.userId) {
-        setOrders([]);
-        return;
-      }
+    useCallback(
+      async (
+        pageNumber = page
+      ) => {
+        if (
+          !user?.userId
+        ) {
+          setOrders([]);
+          return;
+        }
 
-      try {
-        setLoading(true);
+        try {
+          setLoading(true);
 
-        const response =
-          await ordersService.getByUserId(
-            user.userId
+          const response =
+            await ordersService.getByUserId(
+              user.userId,
+              pageNumber
+            );
+
+          const paginatedOrders = response.data;
+
+          setOrders(
+            paginatedOrders.data
           );
 
-        setOrders(
-          response.data ?? []
-        );
-      } catch (error) {
-        console.error(
-          "Failed to fetch orders",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [user?.userId]);
+          setPage(
+            paginatedOrders.page
+          );
 
-  useEffect(() => {
-    refreshOrders();
-  }, [refreshOrders]);
+          setTotalPages(
+            paginatedOrders.totalPages
+          );
+
+        } catch (
+        error
+        ) {
+          console.error(
+            "Failed to fetch orders",
+            error
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        user?.userId,
+        page
+      ]
+    );
 
   const checkout =
     useCallback(
@@ -143,7 +171,7 @@ export function OrderProvider({
           const order =
             response.data;
 
-            // console.log("Order created:", order);
+          // console.log("Order created:", order);
 
           setOrders((prev) => [
             order,
@@ -178,9 +206,9 @@ export function OrderProvider({
           prev.map((order) =>
             order.orderId === orderId
               ? {
-                  ...order,
-                  status,
-                }
+                ...order,
+                status,
+              }
               : order
           )
         );
@@ -237,19 +265,21 @@ export function OrderProvider({
     );
 
   const value = useMemo(
-    () => ({
-      orders,
-      loading,
+     () => ({
+        orders,
+        page,
+        totalPages,
+        loading,
 
-      currentOrderItems,
-      currentOrderTotal,
+        currentOrderItems,
+        currentOrderTotal,
 
-      checkout,
-      updateOrderStatus,
-      cancelOrder,
-      deleteOrder,
-      getOrderById,
-      refreshOrders,
+        checkout,
+        updateOrderStatus,
+        cancelOrder,
+        deleteOrder,
+        getOrderById,
+        refreshOrders,
     }),
     [
       orders,
