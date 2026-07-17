@@ -22,12 +22,20 @@ class ApiClient {
 
       const token = getToken();
 
+      console.log("API Request:", endpoint);
+      console.log("Token:", token);
+
       if (token) {
         headers.set(
           "Authorization",
           `Bearer ${token}`
         );
       }
+
+      console.log(
+        "Authorization header:",
+        headers.get("Authorization")
+      );
 
       if (!(options.body instanceof FormData)) {
         headers.set(
@@ -66,7 +74,7 @@ class ApiClient {
       if (!response.ok) {
         throw new Error(
           data?.message ??
-            `HTTP ${response.status}`
+          `HTTP ${response.status}`
         );
       }
 
