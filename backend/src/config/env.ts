@@ -33,7 +33,7 @@ const envSchema = z.object({
     RAZORPAY_KEY_SECRET: z.string().min(1, 'RAZORPAY_KEY_SECRET is required').optional(),
 
     // CORS
-    ALLOWED_ORIGINS: z.string().optional(),
+    FRONTEND_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
