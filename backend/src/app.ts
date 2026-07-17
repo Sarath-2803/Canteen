@@ -22,23 +22,8 @@ const app = express();
 // Middleware - Security & Logging (before routes)
 app.use(helmet());
 app.use(cors({
-    origin: [
-        "http://localhost:3000",
-        process.env.FRONTEND_URL!,
-    ],
-    methods: [
-        "GET",
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-        "OPTIONS",
-    ],
-    allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-    ],
-    credentials: true,
+  origin: true,
+  credentials: true,
 }));
 app.use(globalRateLimiter);
 app.use(requestLogger);
