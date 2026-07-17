@@ -1,4 +1,4 @@
-import { getToken, clearAuth } from "./auth";
+import { getToken, clearAuth, isTokenExpired } from "./auth";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -22,8 +22,15 @@ class ApiClient {
 
       const token = getToken();
 
-      console.log("API Request:", endpoint);
-      console.log("Token:", token);
+      if (token && isTokenExpired(token)) {
+        clearAuth();
+
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+
+        throw new Error("Session expired");
+      }
 
       if (token) {
         headers.set(
@@ -31,11 +38,6 @@ class ApiClient {
           `Bearer ${token}`
         );
       }
-
-      console.log(
-        "Authorization header:",
-        headers.get("Authorization")
-      );
 
       if (!(options.body instanceof FormData)) {
         headers.set(
@@ -64,10 +66,14 @@ class ApiClient {
           : await response.text();
 
       if (response.status === 401) {
-        clearAuth();
+        const token = getToken();
 
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
+        if (token) {
+          clearAuth();
+
+          if (typeof window !== "undefined") {
+            window.location.href = "/login";
+          }
         }
       }
 

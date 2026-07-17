@@ -69,7 +69,7 @@ export function PaymentProvider({
         orderId: string,
         amount: number
     ): Promise<RazorpayOrderResponse> => {
-      console.log("Creating payment for order:", orderId, "with amount:", amount);
+      // console.log("Creating payment for order:", orderId, "with amount:", amount);
         const response =
             await paymentsService.createOrder(
                 orderId,

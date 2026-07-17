@@ -75,7 +75,7 @@ export function CartProvider({
         const cartData =
           cartResponse.data;
 
-          // console.log("refreshCart cartData:", cartData);
+        // console.log("refreshCart cartData:", cartData);
 
         if (!cartData?.cartId) {
           setCart([]);
@@ -86,8 +86,8 @@ export function CartProvider({
           await cartsService.getItems(
             cartData.cartId
           );
-        
-          console.log("refreshCart itemsResponse:", itemsResponse);
+
+        // console.log("refreshCart itemsResponse:", itemsResponse);
 
         setCart(
           itemsResponse.data ?? []
@@ -157,7 +157,7 @@ export function CartProvider({
       async (
         cartItemId: string
       ) => {
-        console.log("Removing cart item:", cartItemId);
+        // console.log("Removing cart item:", cartItemId);
         await cartsService.removeItem(
           cartItemId
         );

@@ -72,12 +72,6 @@ export default function OrderDetailsPage() {
 				);
 
 
-				console.log(
-					"Order items:",
-					response.data
-				);
-
-
 			} catch(error) {
 
 				console.error(

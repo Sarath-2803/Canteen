@@ -189,11 +189,11 @@ export default function CheckoutPage() {
 			const razorpay =
 				new window.Razorpay(options);
 
-			console.log("Razorpay instance created");
+			// console.log("Razorpay instance created");
 
 			razorpay.open();
 
-			console.log("Razorpay opened");
+			// console.log("Razorpay opened");
 			/*
 				TODO:
 				Replace this section with actual

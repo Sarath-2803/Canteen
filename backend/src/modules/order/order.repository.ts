@@ -45,8 +45,8 @@ class OrderRepository {
         const { 
             page = 1,
             limit = 10, 
-            sortBy = "orderId", 
-            sortOrder = "ASC"
+            sortBy = "createdAt", 
+            sortOrder = "DESC"
          } = options;
 
         const offset = (page - 1) * limit;

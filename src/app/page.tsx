@@ -107,7 +107,7 @@ export default function Home() {
 				return;
 			}
 
-			console.log("user is", user);
+			// console.log("user is", user);
 
 			const quantity =
 				quantities[item.itemId] || 1;

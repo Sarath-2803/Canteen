@@ -96,6 +96,7 @@ export function AuthProvider({
       !storedToken ||
       isTokenExpired(storedToken)
     ) {
+
       clearAuth();
       setLoading(false);
       return;
@@ -110,32 +111,34 @@ export function AuthProvider({
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!token) return;
+  // useEffect(() => {
+  //   if (!token) return;
 
-    const payload = JSON.parse(
-      atob(token.split(".")[1])
-    );
+  //   const payload = JSON.parse(
+  //     atob(token.split(".")[1])
+  //   );
 
-    const expiresAt =
-      payload.exp * 1000;
+  //   const expiresAt =
+  //     payload.exp * 1000;
 
-    const remaining =
-      expiresAt - Date.now();
+  //   const remaining =
+  //     expiresAt - Date.now();
 
-    if (remaining <= 0) {
-      logout();
-      return;
-    }
+  //   if (remaining <= 0) {
+  //     logout();
+  //     return;
+  //   }
 
-    const timer = setTimeout(
-      logout,
-      remaining
-    );
+  //   const MAX_TIMEOUT = 2147483647;
 
-    return () =>
-      clearTimeout(timer);
-  }, [token, logout]);
+  //   const timer = setTimeout(
+  //     logout,
+  //     Math.min(remaining, MAX_TIMEOUT)
+  //   );
+
+  //   return () =>
+  //     clearTimeout(timer);
+  // }, [token, logout]);
 
   const value = useMemo(
     () => ({

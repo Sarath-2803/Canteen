@@ -9,7 +9,7 @@ export default function UserOrdersPage() {
   const { user } = useAuth();
   const { orders, page, totalPages, loading, cancelOrder, refreshOrders } = useOrder();
 
-  console.log("Orders:", orders); // Debugging line to check the orders data
+  // console.log("Orders:", orders); // Debugging line to check the orders data
   useEffect(() => {
     if (user) {
       refreshOrders();

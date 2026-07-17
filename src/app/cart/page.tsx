@@ -19,7 +19,7 @@ export default function CartPage() {
         clearCart,
     } = useCart();
 
-	console.log("CartPage cart:", cart);
+	// console.log("CartPage cart:", cart);
 
     useEffect(() => {
         refreshCart();
