@@ -65,10 +65,9 @@ export interface AuthResponse {
 // ====================
 
 export interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  imageUrl?: string;
+  categoryId: string;
+  categoryName: string;
+  categoryDescription?: string;
 }
 
 

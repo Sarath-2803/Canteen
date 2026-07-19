@@ -53,7 +53,11 @@ interface OrderContextType {
 
   refreshOrders: (
     page?: number
-) => Promise<void>;
+  ) => Promise<void>;
+
+  refreshAllOrders: (
+    page?: number
+  ) => Promise<void>;
 }
 
 const OrderContext =
@@ -147,6 +151,25 @@ export function OrderProvider({
         page
       ]
     );
+
+    const refreshAllOrders = useCallback(
+  async (pageNumber = page) => {
+    try {
+      setLoading(true);
+
+      const response = await ordersService.getAll(pageNumber);
+
+      const result = response.data;
+
+      setOrders(result.data);
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+    } finally {
+      setLoading(false);
+    }
+  },
+  [page]
+);
 
   const checkout =
     useCallback(
@@ -265,21 +288,22 @@ export function OrderProvider({
     );
 
   const value = useMemo(
-     () => ({
-        orders,
-        page,
-        totalPages,
-        loading,
+    () => ({
+      orders,
+      page,
+      totalPages,
+      loading,
 
-        currentOrderItems,
-        currentOrderTotal,
+      currentOrderItems,
+      currentOrderTotal,
 
-        checkout,
-        updateOrderStatus,
-        cancelOrder,
-        deleteOrder,
-        getOrderById,
-        refreshOrders,
+      checkout,
+      updateOrderStatus,
+      cancelOrder,
+      deleteOrder,
+      getOrderById,
+      refreshOrders,
+      refreshAllOrders
     }),
     [
       orders,
@@ -292,6 +316,7 @@ export function OrderProvider({
       deleteOrder,
       getOrderById,
       refreshOrders,
+      refreshAllOrders
     ]
   );
 

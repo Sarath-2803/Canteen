@@ -5,14 +5,16 @@ import { validate } from '../../utils/validate.js';
 import { createItemSchema, updateItemSchema } from './item.dto.js';
 import itemService from './item.service.js';
 import Item from './item.entity.js';
-import { uploadImage } from '../../utils/cloudinary.js';
+import { deleteImage, uploadImage } from '../../utils/cloudinary.js';
 
 // Create a new item
 const createItem = asyncHandler(async (req: Request, res: Response) => {
   let imageUrl: string | undefined;
 
+  console.log('Request body:', req.body);
   if (req.file) {
     imageUrl = await uploadImage(req.file.buffer, 'canteen/items');
+    console.log('Image uploaded to Cloudinary:', imageUrl);
   }
 
   const payload = validate(createItemSchema, { ...req.body, imageUrl });
@@ -69,6 +71,11 @@ const updateItem = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (req.file) {
+    const existingItem = await itemService.getItemById(id as string);
+    if (existingItem.imageUrl) {
+      console.log('Deleting existing image from Cloudinary:', existingItem.imageUrl);
+      await deleteImage(existingItem.imageUrl);
+    }
     imageUrl = await uploadImage(req.file.buffer, 'canteen/items');
   }
 

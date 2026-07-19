@@ -1,21 +1,24 @@
 import { z }    from "zod";
 
-const cattegoryIdSchema = z.uuid("Invalid category ID format");
+const categoryIdSchema = z.uuid("Invalid category ID format");
 
 const itemNameSchema = z.string().trim().min(1, "Item name is required").max(255, "Item name must not exceed 255 characters");
 
 const itemDescriptionSchema = z.string().trim().max(255, "Item description must not exceed 255 characters");
 
-const priceSchema = z.number().min(0, "Price must be a positive number");
+const priceSchema = z.coerce.number().min(0, "Price must be a positive number");
 
-const imageUrlSchema = z.string().url("Invalid image URL format");
+const imageUrlSchema = z.url("Invalid image URL format");
 
-const stockQuantitySchema = z.number().int().min(0, "Stock quantity must be a non-negative integer");
+const stockQuantitySchema = z.coerce.number().int().min(0, "Stock quantity must be a non-negative integer");
 
-const isAvailableSchema = z.boolean().default(true);    
+const isAvailableSchema = z.preprocess(
+  (val) => val === "true" ,
+  z.boolean()
+)   
 
 export const createItemSchema = z.object({
-  categoryId: cattegoryIdSchema,
+  categoryId: categoryIdSchema,
   itemName: itemNameSchema,
   itemDescription: itemDescriptionSchema,
   price: priceSchema,
@@ -25,7 +28,7 @@ export const createItemSchema = z.object({
 });
 
 export const updateItemSchema = z.object({
-  categoryId: cattegoryIdSchema.optional(),
+  categoryId: categoryIdSchema.optional(),
   itemName: itemNameSchema.optional(),
   itemDescription: itemDescriptionSchema.optional(),
   price: priceSchema.optional(),
@@ -36,7 +39,7 @@ export const updateItemSchema = z.object({
 
 export const itemSchema = z.object({
   itemId: z.uuid("Invalid item ID format"),
-  categoryId: cattegoryIdSchema,
+  categoryId: categoryIdSchema,
   itemName: itemNameSchema,
   itemDescription: itemDescriptionSchema,
   price: priceSchema,

@@ -13,4 +13,7 @@ export const usersService = {
 
   getCustomers: () =>
     api.get<ApiResponse<User[]>>('/users/customers'),
+
+  updateProfile: (userId: string, data: Partial<User>) =>
+    api.put<ApiResponse<User>>(`/users/${userId}`, data),
 };

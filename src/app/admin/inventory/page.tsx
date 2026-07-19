@@ -1,178 +1,194 @@
-// "use client";
-// import { useEffect, useState } from "react";
-// import Image from "next/image";
-// import { itemsApi } from "@/lib/api";
-// import { InventoryItem } from "@/lib/types";
-
-// export default function AdminInventoryPage() {
-//   const [inventory, setInventory] = useState<InventoryItem[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-
-//   useEffect(() => {
-//     loadItems();
-//   }, []);
-
-//   const loadItems = async () => {
-//     try {
-//       setLoading(true);
-//       const items = await itemsApi.getAll();
-//       setInventory(items);
-//       setError("");
-//     } catch (err: unknown) {
-//       setError(err instanceof Error ? err.message : "Failed to load items");
-//       console.error("Error loading items:", err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const toggleAvailability = async (id: string, currentStatus: boolean) => {
-//     const confirmMsg = currentStatus 
-//       ? "Mark this item as unavailable?" 
-//       : "Mark this item as available?";
-    
-//     if (confirm(confirmMsg)) {
-//       try {
-//         await itemsApi.update(id, { available: !currentStatus });
-//         // Update local state instead of reloading all items
-//         setInventory(prev => prev.map(item => 
-//           item.id === id ? { ...item, available: !currentStatus } : item
-//         ));
-//       } catch (err: unknown) {
-//         alert(err instanceof Error ? err.message : "Failed to update availability");
-//       }
-//     }
-//   };
-
-//   const updatePrice = async (id: string, currentPrice: number, itemName: string) => {
-//     const newPriceStr = prompt(`Enter new price for ${itemName}:`, currentPrice.toString());
-    
-//     if (newPriceStr === null) return; // User cancelled
-    
-//     const newPrice = parseFloat(newPriceStr);
-    
-//     if (isNaN(newPrice) || newPrice < 0) {
-//       alert("Please enter a valid price");
-//       return;
-//     }
-    
-//     try {
-//       await itemsApi.update(id, { price: newPrice });
-//       alert(`Price updated successfully to ₹${newPrice}`);
-//       // Update local state instead of reloading all items
-//       setInventory(prev => prev.map(item => 
-//         item.id === id ? { ...item, price: newPrice } : item
-//       ));
-//     } catch (err: unknown) {
-//       alert(err instanceof Error ? err.message : "Failed to update price");
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <div className="flex items-center justify-center min-h-[400px]">
-//         <div className="text-lg text-gray-800">Loading inventory...</div>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div>
-//       <div className="flex justify-between items-center mb-6">
-//         <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-//         <button
-//           onClick={loadItems}
-//           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-//         >
-//           Refresh
-//         </button>
-//       </div>
-
-//       {error && (
-//         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-//           {error}
-//         </div>
-//       )}
-
-//       <div className="bg-white rounded-xl shadow overflow-x-auto">
-//         <table className="w-full text-left">
-//           <thead className="bg-gray-100">
-//             <tr>
-//               <th className="px-4 py-3 text-gray-900">Image</th>
-//               <th className="px-4 py-3 text-gray-900">Item</th>
-//               <th className="px-4 py-3 text-gray-900">Price (₹)</th>
-//               <th className="px-4 py-3 text-gray-900">Status</th>
-//               <th className="px-4 py-3 text-gray-900">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {inventory.length === 0 ? (
-//               <tr>
-//                 <td colSpan={5} className="px-4 py-8 text-center text-gray-700">
-//                   No items found. Run the seeder to add items.
-//                 </td>
-//               </tr>
-//             ) : (
-//               inventory.map((item) => (
-//                 <tr key={item.id} className="border-t">
-//                   <td className="px-4 py-3">
-//                     {item.imageUrl && (
-//                       <Image 
-//                         src={item.imageUrl} 
-//                         alt={item.name}
-//                         width={64}
-//                         height={64}
-//                         className="object-cover rounded"
-//                       />
-//                     )}
-//                   </td>
-//                   <td className="px-4 py-3 font-medium text-gray-900">{item.name}</td>
-//                   <td className="px-4 py-3 text-gray-800">₹{item.price}</td>
-//                   <td className="px-4 py-3">
-//                     <span className={`px-3 py-1 rounded-full text-sm ${
-//                       item.available 
-//                         ? "bg-green-100 text-green-800" 
-//                         : "bg-red-100 text-red-800"
-//                     }`}>
-//                       {item.available ? "Available" : "Unavailable"}
-//                     </span>
-//                   </td>
-//                   <td className="px-4 py-3">
-//                     <div className="flex gap-2">
-//                       <button
-//                         className="px-4 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded"
-//                         onClick={() => updatePrice(item.id, item.price, item.name)}
-//                       >
-//                         Edit Price
-//                       </button>
-//                       <button
-//                         className={`px-4 py-1 text-sm rounded ${
-//                           item.available
-//                             ? "bg-red-500 hover:bg-red-600"
-//                             : "bg-green-500 hover:bg-green-600"
-//                         } text-white`}
-//                         onClick={() => toggleAvailability(item.id, item.available)}
-//                       >
-//                         {item.available ? "Disable" : "Enable"}
-//                       </button>
-//                     </div>
-//                   </td>
-//                 </tr>
-//               ))
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// }
-
+"use client";
+import { Item } from "@/lib/types";
+import { itemsService } from "@/services/items";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function AdminInventoryPage() {
+  const [menuItems, setMenuItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+
+        const response = await itemsService.getAll();
+
+        // Supports both paginated and plain responses
+        const items =
+          response?.data?.data ??
+          response?.data ??
+          [];
+
+        setMenuItems(items);
+      } catch (error) {
+        console.error(
+          "Failed to fetch menu items:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, []);
+
+  const handleAvailability = (itemId: string, isAvailable: boolean) => async () => {
+    try {
+      const formData = new FormData();
+
+      formData.append("isAvailable", (!isAvailable).toString());
+      await itemsService.update(itemId, formData);
+
+      setMenuItems((prevItems) =>
+        prevItems.map((item) =>
+          item.itemId === itemId
+            ? { ...item, isAvailable: !isAvailable }
+            : item
+        )
+      );
+
+      alert(
+        `Item ${
+          isAvailable ? "disabled" : "enabled"
+        } successfully.`
+      );
+    } catch (error) {
+      console.error(
+        `Failed to ${
+          isAvailable ? "disable" : "enable"
+        } item:`,
+        error
+      );
+      alert(
+        `Failed to ${
+          isAvailable ? "disable" : "enable"
+        } item.`
+      );
+    }
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-lg text-gray-800">Admin Inventory Page</div>
-    </div>
-  );
+  <div className="min-h-screen bg-gray-50">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-900">
+          Inventory Management
+        </h1>
+        <button
+          onClick={() => {
+            window.location.href = "/admin/inventory/add";
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg"
+        >
+          Add Item
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-20">
+          <p className="text-xl text-gray-600">
+            Loading inventory...
+          </p>
+        </div>
+      ) : menuItems.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-lg text-gray-600">
+            No items found.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {menuItems.map((item) => (
+
+            <div
+              key={item.itemId}
+              className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-xl transition"
+            >
+
+              <div className="relative h-52">
+
+                <Image
+                  src={item.imageUrl || "/placeholder-food.jpg"}
+                  alt={item.itemName}
+                  fill
+                  className="object-cover"
+                />
+
+                {!item.isAvailable && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
+                      UNAVAILABLE
+                    </span>
+                  </div>
+                )}
+
+              </div>
+
+              <div className="p-5">
+
+                <h2 className="text-xl font-bold text-gray-900">
+                  {item.itemName}
+                </h2>
+
+                <p className="text-green-600 font-semibold mt-2 text-lg">
+                  ₹{item.price}
+                </p>
+
+                <div className="mt-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      item.isAvailable
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {item.isAvailable
+                      ? "Available"
+                      : "Unavailable"}
+                  </span>
+                </div>
+
+                <div className="mt-6 flex gap-3">
+
+                  <button 
+                  onClick={()=> {
+                    window.location.href = `/admin/inventory/${item.itemId}`
+                  }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                  onClick={handleAvailability(item.itemId, item.isAvailable)}
+                    className={`flex-1 py-2 rounded-lg text-white ${
+                      item.isAvailable
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                    }`}
+                  >
+                    {item.isAvailable
+                      ? "Disable"
+                      : "Enable"}
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+      )}
+
+    </main>
+  </div>
+);
 }

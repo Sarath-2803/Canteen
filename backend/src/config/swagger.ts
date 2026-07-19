@@ -80,7 +80,6 @@ const swaggerDefinition = {
           id: { type: 'string', format: 'uuid' },
           name: { type: 'string' },
           description: { type: 'string' },
-          imageUrl: { type: 'string', format: 'uri' },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },

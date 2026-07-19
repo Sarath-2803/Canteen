@@ -255,128 +255,142 @@ Thank you for your order.
 			<Header />
 
 
-			<main className="max-w-2xl mx-auto px-4 py-8">
+			<main className="mx-auto max-w-5xl px-4 py-8">
 
+  {paymentSuccess && (
+    <div className="mb-8 rounded-2xl border border-green-200 bg-green-50 p-5 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-white text-xl">
+          ✓
+        </div>
 
-				{
-					paymentSuccess && (
+        <div>
+          <h2 className="text-lg font-semibold text-green-800">
+            Payment Successful
+          </h2>
 
-						<div className="bg-green-100 border border-green-300 text-green-700 p-4 rounded mb-6">
+          <p className="text-sm text-green-700">
+            Your order has been placed successfully.
+          </p>
+        </div>
+      </div>
+    </div>
+  )}
 
-							Payment successful!
+  <div className="rounded-3xl bg-white shadow-lg overflow-hidden">
 
-						</div>
+    {/* Header */}
 
-					)
+    <div className="border-b bg-gradient-to-r from-green-600 to-green-500 px-8 py-8 text-white">
 
-				}
+      <p className="text-sm uppercase tracking-wider opacity-80">
+        Order Details
+      </p>
 
+      <h1 className="mt-2 text-3xl font-bold">
+        #{orderId}
+      </h1>
 
+    </div>
 
-				<div className="bg-white rounded-lg shadow p-6">
+    {/* Items */}
 
+    <div className="p-8">
 
-					<h1 className="text-2xl font-bold mb-6 text-gray-900">
-						Order #{orderId}
-					</h1>
+      <h2 className="mb-6 text-xl font-bold text-gray-900">
+        Ordered Items
+      </h2>
 
+      <div className="space-y-4">
 
+        {orderItems.map((item) => (
 
-					<h2 className="text-xl font-semibold mb-4 text-gray-900">
-						Items
-					</h2>
+          <div
+            key={item.itemId}
+            className="flex items-center justify-between rounded-2xl border border-gray-200 p-5 hover:shadow-md transition"
+          >
 
+            <div>
 
+              <h3 className="text-lg font-semibold text-gray-900">
+                {item.itemName}
+              </h3>
 
-					<div className="space-y-3">
+              <p className="mt-1 text-sm text-gray-500">
+                Quantity: {item.quantity}
+              </p>
 
-						{
-							orderItems.map(
-								item=>(
+              <p className="mt-1 text-sm text-gray-500">
+                ₹{item.unitPrice} each
+              </p>
 
-									<div
-										key={
-											item.itemId
-										}
-										className="flex justify-between bg-gray-50 p-3 rounded"
-									>
+            </div>
 
-										<div>
+            <div className="text-right">
 
-											<p className="font-medium text-gray-800">
-												{item.itemName}
-											</p>
+              <p className="text-sm text-gray-500">
+                Subtotal
+              </p>
 
+              <p className="text-2xl font-bold text-green-600">
+                ₹{item.subtotal}
+              </p>
 
-											<p className="text-sm text-gray-500">
-												Qty: {item.quantity}
-											</p>
+            </div>
 
-										</div>
+          </div>
 
+        ))}
 
+      </div>
 
-										<p className="font-semibold text-gray-900">
+      {/* Total */}
 
-											₹{item.subtotal}
+      <div className="mt-10 rounded-2xl bg-gray-50 p-6">
 
-										</p>
+        <div className="flex items-center justify-between">
 
+          <div>
 
-									</div>
+            <p className="text-gray-600">
+              Total Amount
+            </p>
 
-								)
-							)
-						}
+            <h2 className="mt-1 text-3xl font-bold text-gray-900">
+              ₹{totalAmount}
+            </h2>
 
-					</div>
+          </div>
 
+        </div>
 
+      </div>
 
-					<div className="border-t mt-6 pt-4">
+      {/* Buttons */}
 
-						<p className="text-xl font-bold text-gray-900">
-							Total: ₹{totalAmount}
-						</p>
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row">
 
-					</div>
+        <button
+          onClick={() => router.push("/user/orders")}
+          className="flex-1 rounded-xl bg-gray-200 py-3 font-semibold text-gray-800 transition hover:bg-gray-300"
+        >
+          Back to Orders
+        </button>
 
+        <button
+          onClick={downloadReceipt}
+          className="flex-1 rounded-xl bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
+        >
+          Download Receipt
+        </button>
 
+      </div>
 
+    </div>
 
-					<div className="mt-8 flex gap-2">
+  </div>
 
-
-						<button
-							onClick={()=>
-								router.push(
-									"/user/orders"
-								)
-							}
-							className="flex-1 bg-gray-500 text-white py-2 rounded-lg"
-						>
-							Back
-						</button>
-
-
-
-						<button
-							onClick={
-								downloadReceipt
-							}
-							className="flex-1 bg-blue-500 text-white py-2 rounded-lg"
-						>
-							Receipt
-						</button>
-
-
-					</div>
-
-
-				</div>
-
-
-			</main>
+</main>
 
 
 		</div>

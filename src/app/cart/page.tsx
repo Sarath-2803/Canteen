@@ -77,150 +77,171 @@ export default function CartPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
+  <div className="min-h-screen bg-gray-50">
+    <Header />
 
-            <main className="max-w-6xl mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                    Shopping Cart
-                </h1>
+    <main className="mx-auto max-w-7xl px-4 py-8">
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg shadow">
-                            {cart.map(
-                                (cartItem) => (
-                                    <div
-                                        key={
-                                            cartItem.cartItemId
-                                        }
-                                        className="flex justify-between items-center p-4 border-b last:border-b-0"
-                                    >
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900">
-                                                {cartItem.item?.itemName ??
-                                                    "Unknown Item"}
-                                            </h3>
+      {/* Heading */}
 
-                                            <p className="text-gray-600">
-                                                ₹
-                                                {cartItem
-                                                    .item?.price ??
-                                                    0}
-                                            </p>
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 
-                                            <p className="text-gray-600">
-                                                Quantity:{" "}
-                                                {
-                                                    cartItem.quantity
-                                                }
-                                            </p>
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900">
+            Shopping Cart
+          </h1>
 
-                                            <p className="text-green-600 font-medium mt-1">
-                                                ₹
-                                                {(
-                                                    (cartItem
-                                                        .item?.price ??
-                                                        0) *
-                                                    cartItem.quantity
-                                                ).toFixed(
-                                                    2
-                                                )}
-                                            </p>
-                                        </div>
-
-                                        <button
-                                            onClick={() =>
-                                                removeFromCart(
-                                                    cartItem.cartItemId
-                                                )
-                                            }
-                                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                )
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow p-6 h-fit">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                            Order Summary
-                        </h2>
-
-                        <div className="space-y-2 mb-4">
-                            <div className="flex justify-between text-gray-700">
-                                <span>
-                                    Subtotal
-                                </span>
-                                <span>
-                                    ₹
-                                    {totalPrice.toFixed(
-                                        2
-                                    )}
-                                </span>
-                            </div>
-
-                            <div className="flex justify-between text-gray-700">
-                                <span>
-                                    Total Items
-                                </span>
-                                <span>
-                                    {
-                                        cartCount
-                                    }
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="border-t pt-4 mb-6">
-                            <div className="flex justify-between text-lg font-bold text-gray-900">
-                                <span>
-                                    Total
-                                </span>
-
-                                <span>
-                                    ₹
-                                    {totalPrice.toFixed(
-                                        2
-                                    )}
-                                </span>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() =>
-                                router.push(
-                                    "/checkout"
-                                )
-                            }
-                            className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg mb-3 transition-colors"
-                        >
-                            Proceed to Checkout
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                router.push("/")
-                            }
-                            className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 rounded-lg transition-colors"
-                        >
-                            Continue Shopping
-                        </button>
-
-                        <button
-                            onClick={() =>
-                                clearCart()
-                            }
-                            className="w-full mt-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors"
-                        >
-                            Clear Cart
-                        </button>
-                    </div>
-                </div>
-            </main>
+          <p className="mt-2 text-gray-500">
+            {cartCount} item{cartCount !== 1 && "s"} in your cart
+          </p>
         </div>
-    );
+
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+
+        {/* Cart Items */}
+
+        <div className="space-y-5 lg:col-span-2">
+
+          {cart.map((cartItem) => (
+
+            <div
+              key={cartItem.cartItemId}
+              className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-lg"
+            >
+
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+                <div>
+
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {cartItem.item?.itemName ?? "Unknown Item"}
+                  </h2>
+
+                  <p className="mt-2 text-gray-500">
+                    Unit Price
+                  </p>
+
+                  <p className="font-semibold text-green-600">
+                    ₹{cartItem.item?.price ?? 0}
+                  </p>
+
+                  <p className="mt-3 text-gray-600">
+                    Quantity :
+                    <span className="ml-2 font-semibold text-gray-900">
+                      {cartItem.quantity}
+                    </span>
+                  </p>
+
+                </div>
+
+                <div className="text-right">
+
+                  <p className="text-sm text-gray-500">
+                    Total
+                  </p>
+
+                  <h3 className="mt-1 text-3xl font-bold text-gray-900">
+                    ₹
+                    {(
+                      (cartItem.item?.price ?? 0) *
+                      cartItem.quantity
+                    ).toFixed(2)}
+                  </h3>
+
+                  <button
+                    onClick={() =>
+                      removeFromCart(cartItem.cartItemId)
+                    }
+                    className="mt-5 rounded-xl bg-red-500 px-5 py-2 font-medium text-white transition hover:bg-red-600"
+                  >
+                    Remove
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+        {/* Summary */}
+
+        <div>
+
+          <div className="sticky top-24 rounded-3xl bg-white p-7 shadow-lg">
+
+            <h2 className="text-2xl font-bold text-gray-900">
+              Order Summary
+            </h2>
+
+            <div className="mt-8 space-y-4">
+
+              <div className="flex justify-between text-gray-600">
+                <span>Subtotal</span>
+
+                <span className="font-medium">
+                  ₹{totalPrice.toFixed(2)}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-gray-600">
+                <span>Total Items</span>
+
+                <span className="font-medium">
+                  {cartCount}
+                </span>
+              </div>
+
+            </div>
+
+            <div className="my-6 border-t" />
+
+            <div className="flex items-center justify-between">
+
+              <span className="text-xl font-semibold text-gray-900">
+                Total
+              </span>
+
+              <span className="text-3xl font-bold text-green-600">
+                ₹{totalPrice.toFixed(2)}
+              </span>
+
+            </div>
+
+            <button
+              onClick={() => router.push("/checkout")}
+              className="mt-8 w-full rounded-xl bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700"
+            >
+              Proceed to Checkout
+            </button>
+
+            <button
+              onClick={() => router.push("/")}
+              className="mt-3 w-full rounded-xl bg-gray-200 py-3 font-semibold text-gray-800 transition hover:bg-gray-300"
+            >
+              Continue Shopping
+            </button>
+
+            <button
+              onClick={clearCart}
+              className="mt-3 w-full rounded-xl bg-red-500 py-3 font-semibold text-white transition hover:bg-red-600"
+            >
+              Clear Cart
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+);
 }

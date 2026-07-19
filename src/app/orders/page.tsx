@@ -63,200 +63,181 @@ export default function OrdersPage() {
 		<div className="min-h-screen bg-gray-50">
 			<Header />
 
-			<main className="max-w-6xl mx-auto px-4 py-8">
-				<h1 className="text-3xl font-bold text-gray-900 mb-8">
-					My Orders
-				</h1>
+			<main className="mx-auto max-w-7xl px-4 py-8">
+  <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 className="text-4xl font-bold text-gray-900">
+        My Orders
+      </h1>
+      <p className="mt-1 text-gray-500">
+        Track and manage your recent orders
+      </p>
+    </div>
 
-				{orders.length === 0 ? (
-					<div className="text-center py-12">
-						<p className="text-gray-600 mb-4">
-							No orders yet
-						</p>
+    <div className="rounded-xl bg-green-50 px-5 py-3">
+      <p className="text-sm text-gray-500">
+        Total Orders
+      </p>
+      <p className="text-2xl font-bold text-green-600">
+        {orders.length}
+      </p>
+    </div>
+  </div>
 
-						<button
-							onClick={() =>
-								router.push("/")
-							}
-							className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg"
-						>
-							Start Ordering
-						</button>
-					</div>
-				) : (
-					<div className="space-y-4">
-						{orders.map(
-							(order) => (
-								<div
-									key={
-										order.orderId
-									}
-									className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
-								>
-									<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-										<div>
-											<h3 className="text-lg font-semibold text-gray-900">
-												Order #
-												{order.orderId}
-											</h3>
+  {orders.length === 0 ? (
+    <div className="rounded-3xl border border-dashed bg-white py-24 text-center shadow-sm">
+      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-4xl">
+        🍽️
+      </div>
 
-											<p className="text-sm text-gray-600">
-												{new Date(
-													order.createdAt
-												).toLocaleDateString()}
-											</p>
-										</div>
+      <h2 className="text-2xl font-bold text-gray-900">
+        No Orders Yet
+      </h2>
 
-										<span
-											className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${getStatusColor(
-												order.status
-											)}`}
-										>
-											{
-												order.status
-											}
-										</span>
-									</div>
+      <p className="mt-2 text-gray-500">
+        Looks like you haven&apos;t ordered anything.
+      </p>
 
-									<div className="mb-4">
-										<h4 className="font-semibold text-gray-700 mb-2">
-											Items
-										</h4>
+      <button
+        onClick={() => router.push("/")}
+        className="mt-8 rounded-xl bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-700"
+      >
+        Browse Menu
+      </button>
+    </div>
+  ) : (
+    <div className="space-y-6">
+      {orders.map((order) => (
+        <div
+          key={order.orderId}
+          className="overflow-hidden rounded-3xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+        >
+          {/* Header */}
 
-										<div className="space-y-2">
-											{order
-												.items
-												?.length ? (
-												order.items.map(
-													(
-														item
-													) => (
-														<div
-															key={
-																item.itemId
-															}
-															className="flex justify-between text-sm text-gray-600"
-														>
-															<div>
-																<span className="font-medium">
-																	{
-																		item.itemName
-																	}
-																</span>
+          <div className="border-b bg-gray-50 px-6 py-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-																<span>
-																	{" "}
-																	x
-																	{
-																		item.quantity
-																	}
-																</span>
-															</div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Order #{order.orderId.slice(0, 8)}
+                </h2>
 
-															<div className="text-right">
-																<div>
-																	₹
-																	{
-																		item.subtotal
-																	}
-																</div>
+                <p className="mt-1 text-sm text-gray-500">
+                  {new Date(order.createdAt).toLocaleString("en-IN")}
+                </p>
+              </div>
 
-																<div className="text-xs text-gray-500">
-																	₹
-																	{
-																		item.unitPrice
-																	}{" "}
-																	each
-																</div>
-															</div>
-														</div>
-													)
-												)
-											) : (
-												<p className="text-sm text-gray-500">
-													No
-													item
-													details
-													available
-												</p>
-											)}
-										</div>
-									</div>
+              <span
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${getStatusColor(
+                  order.status
+                )}`}
+              >
+                {order.status}
+              </span>
 
-									<div className="border-t pt-4 mb-4 flex justify-between items-center">
-										<p className="text-lg font-bold text-gray-900">
-											Total:
-											₹
-											{
-												order.totalAmount
-											}
-										</p>
-									</div>
+            </div>
+          </div>
 
-									<div className="flex gap-2 flex-wrap">
-										<button
-											onClick={() =>
-												router.push(
-													`/orders/${order.orderId}`
-												)
-											}
-											className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-sm"
-										>
-											View
-											Details
-										</button>
+          {/* Items */}
 
-										{canCancel(
-											order
-										) && (
-											<button
-												disabled={
-													loading
-												}
-												onClick={async () => {
-													if (
-														confirm(
-															"Cancel this order?"
-														)
-													) {
-														await cancelOrder(
-															order.orderId
-														);
-													}
-												}}
-												className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg text-sm"
-											>
-												Cancel
-												Order
-											</button>
-										)}
+          <div className="space-y-3 p-6">
+            {order.items?.length ? (
+              order.items.map((item) => (
+                <div
+                  key={item.orderItemId}
+                  className="flex items-center justify-between rounded-2xl bg-gray-50 p-4"
+                >
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {item.itemName}
+                    </h3>
 
-										<button
-											disabled={
-												loading
-											}
-											onClick={async () => {
-												if (
-													confirm(
-														"Delete this order from history?"
-													)
-												) {
-													await deleteOrder(
-														order.orderId
-													);
-												}
-											}}
-											className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg text-sm"
-										>
-											Delete
-										</button>
-									</div>
-								</div>
-							)
-						)}
-					</div>
-				)}
-			</main>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Qty {item.quantity} × ₹{item.unitPrice}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold text-green-600">
+                      ₹{item.subtotal}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">
+                No item details available.
+              </p>
+            )}
+          </div>
+
+          {/* Footer */}
+
+          <div className="flex flex-col gap-5 border-t bg-gray-50 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+
+            <div>
+              <p className="text-sm text-gray-500">
+                Total Amount
+              </p>
+
+              <h2 className="text-3xl font-bold text-green-600">
+                ₹{order.totalAmount}
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+
+              <button
+                onClick={() =>
+                  router.push(`/orders/${order.orderId}`)
+                }
+                className="rounded-xl bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700"
+              >
+                View Details
+              </button>
+
+              {canCancel(order) && (
+                <button
+                  disabled={loading}
+                  onClick={async () => {
+                    if (
+                      confirm(
+                        "Cancel this order?"
+                      )
+                    ) {
+                      await cancelOrder(order.orderId);
+                    }
+                  }}
+                  className="rounded-xl bg-amber-500 px-5 py-2.5 font-medium text-white transition hover:bg-amber-600 disabled:opacity-50"
+                >
+                  Cancel Order
+                </button>
+              )}
+
+              <button
+                disabled={loading}
+                onClick={async () => {
+                  if (
+                    confirm(
+                      "Delete this order from history?"
+                    )
+                  ) {
+                    await deleteOrder(order.orderId);
+                  }
+                }}
+                className="rounded-xl bg-red-500 px-5 py-2.5 font-medium text-white transition hover:bg-red-600 disabled:opacity-50"
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</main>
 		</div>
 	);
 }

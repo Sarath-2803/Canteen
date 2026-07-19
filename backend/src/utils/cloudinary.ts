@@ -26,7 +26,24 @@ export const uploadImage = async (
 };
 
 export const deleteImage = async (imageUrl: string): Promise<void> => {
-    // extract public_id from URL
-    const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
-    await cloudinary.uploader.destroy(publicId);
+    // Get everything after /upload/
+    const uploadIndex = imageUrl.indexOf("/upload/");
+
+    if (uploadIndex === -1) {
+        throw new Error("Invalid Cloudinary URL");
+    }
+
+    let publicId = imageUrl.substring(uploadIndex + "/upload/".length);
+
+    // Remove version (v1234567890/)
+    publicId = publicId.replace(/^v\d+\//, "");
+
+    // Remove extension
+    publicId = publicId.replace(/\.[^/.]+$/, "");
+
+    console.log("Deleting Cloudinary publicId:", publicId);
+
+    const result = await cloudinary.uploader.destroy(publicId);
+
+    console.log(result);
 };

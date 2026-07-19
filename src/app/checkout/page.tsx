@@ -108,14 +108,14 @@ export default function CheckoutPage() {
 			// console.log("window.Razorpay =", window.Razorpay);
 
 			if (
-	!order.keyId ||
-	!order.currency ||
-	!order.razorpayOrderId
-) {
-	throw new Error(
-		"Invalid Razorpay configuration received from server."
-	);
-}
+				!order.keyId ||
+				!order.currency ||
+				!order.razorpayOrderId
+			) {
+				throw new Error(
+					"Invalid Razorpay configuration received from server."
+				);
+			}
 
 			const options = {
 				key: order.keyId!,
@@ -276,119 +276,179 @@ export default function CheckoutPage() {
 			<div className="min-h-screen bg-gray-50">
 				<Header />
 
-				<main className="max-w-2xl mx-auto px-4 py-8">
-					<h1 className="text-3xl font-bold text-gray-900 mb-8">
-						Checkout
-					</h1>
+				<main className="mx-auto max-w-7xl px-4 py-8">
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<div className="mb-8">
 
-						{/* ORDER SUMMARY */}
+						<h1 className="text-4xl font-bold text-gray-900">
+							Checkout
+						</h1>
 
-						<div className="bg-white p-6 rounded-lg shadow">
-							<h2 className="text-xl font-semibold mb-4 text-gray-900">
-								Order Summary
-							</h2>
+						<p className="mt-2 text-gray-500">
+							Review your order before making payment.
+						</p>
 
-							<div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-								{cart.map(
-									(item) => (
+					</div>
+
+					<div className="grid gap-8 lg:grid-cols-3">
+
+						{/* LEFT */}
+
+						<div className="lg:col-span-2">
+
+							<div className="rounded-3xl bg-white p-7 shadow-lg">
+
+								<h2 className="mb-6 text-2xl font-bold text-gray-900">
+									Order Summary
+								</h2>
+
+								<div className="space-y-5">
+
+									{cart.map((item) => (
+
 										<div
-											key={
-												item.cartItemId
-											}
-											className="flex justify-between text-gray-700"
+											key={item.cartItemId}
+											className="flex items-center justify-between rounded-2xl border border-gray-200 p-5"
 										>
-											<span>
-												{
-													item
-														.item
-														?.itemName
-												}{" "}
-												×{" "}
-												{
-													item.quantity
-												}
-											</span>
 
-											<span>
-												₹
-												{(
-													item
-														.item
-														?.price ??
-													0
-												) *
-													item.quantity}
-											</span>
+											<div>
+
+												<h3 className="text-lg font-semibold text-gray-900">
+													{item.item?.itemName}
+												</h3>
+
+												<p className="mt-1 text-sm text-gray-500">
+													₹{item.item?.price} × {item.quantity}
+												</p>
+
+											</div>
+
+											<div className="text-right">
+
+												<p className="text-sm text-gray-500">
+													Subtotal
+												</p>
+
+												<h3 className="text-2xl font-bold text-green-600">
+													₹
+													{(item.item?.price ?? 0) *
+														item.quantity}
+												</h3>
+
+											</div>
+
 										</div>
-									)
-								)}
+
+									))}
+
+								</div>
+
 							</div>
 
-							<div className="border-t pt-4 text-xl font-bold text-gray-900">
-								Total: ₹
-								{totalAmount}
-							</div>
 						</div>
 
-						{/* PAYMENT */}
+						{/* RIGHT */}
 
-						<div className="bg-white p-6 rounded-lg shadow">
-							<h2 className="text-xl font-semibold mb-4 text-gray-900">
-								Payment
-							</h2>
+						<div>
 
-							<form
-								onSubmit={
-									handlePayment
-								}
-								className="space-y-4"
-							>
-								{error && (
-									<div className="bg-red-100 border border-red-300 text-red-700 p-3 rounded">
-										{error}
+							<div className="sticky top-24 rounded-3xl bg-white p-7 shadow-lg">
+
+								<h2 className="text-2xl font-bold text-gray-900">
+									Payment Summary
+								</h2>
+
+								<div className="mt-8 space-y-4">
+
+									<div className="flex justify-between text-gray-600">
+
+										<span>Items</span>
+
+										<span>{cart.length}</span>
+
 									</div>
-								)}
 
-								{/* <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-									<h3 className="font-semibold text-purple-900 mb-2">
-										UPI Payment via Razorpay
-									</h3>
+									<div className="flex justify-between text-gray-600">
 
-									<p className="text-sm text-purple-700">
-										Click the button below
-										to continue with UPI
-										payment using Google
-										Pay, PhonePe, Paytm,
-										BHIM or any other UPI
-										app.
+										<span>Total Quantity</span>
+
+										<span>
+											{cart.reduce(
+												(sum, item) =>
+													sum + item.quantity,
+												0
+											)}
+										</span>
+
+									</div>
+
+								</div>
+
+								<div className="my-6 border-t" />
+
+								<div className="flex items-center justify-between">
+
+									<span className="text-xl font-semibold text-gray-900">
+										Total
+									</span>
+
+									<span className="text-3xl font-bold text-green-600">
+										₹{totalAmount}
+									</span>
+
+								</div>
+
+								<div className="mt-6 rounded-2xl border border-green-100 bg-green-50 p-4">
+
+									<p className="font-semibold text-green-700">
+										Razorpay Secure Payment
 									</p>
-								</div> */}
 
-								<button
-									type="submit"
-									disabled={loading}
-									className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold"
-								>
-									{loading
-										? "Processing Payment..."
-										: `Pay ₹${totalAmount}`}
-								</button>
+									<p className="mt-2 text-sm text-green-600">
+										Pay securely using UPI, Cards,
+										Net Banking or Wallets.
+									</p>
 
-								<button
-									type="button"
-									onClick={() =>
-										router.push("/")
-									}
-									className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-semibold"
+								</div>
+
+								<form
+									onSubmit={handlePayment}
+									className="mt-6"
 								>
-									Cancel
-								</button>
-							</form>
+
+									{error && (
+
+										<div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+											{error}
+										</div>
+
+									)}
+
+									<button
+										type="submit"
+										disabled={loading}
+										className="w-full rounded-xl bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700 disabled:bg-gray-400"
+									>
+										{loading
+											? "Processing Payment..."
+											: `Pay ₹${totalAmount}`}
+									</button>
+
+									<button
+										type="button"
+										onClick={() => router.push("/cart")}
+										className="mt-3 w-full rounded-xl bg-gray-200 py-3 font-semibold text-gray-800 transition hover:bg-gray-300"
+									>
+										Back to Cart
+									</button>
+
+								</form>
+
+							</div>
+
 						</div>
 
 					</div>
+
 				</main>
 			</div>
 		</>
