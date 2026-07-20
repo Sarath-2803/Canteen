@@ -243,7 +243,7 @@ export default function CheckoutPage() {
 			<div className="min-h-screen bg-gray-50">
 				<Header />
 
-				<main className="max-w-2xl mx-auto px-4 py-8">
+				<main className="max-w-2xl mx-auto px-4 py-8 pt-16">
 					<p className="text-center text-gray-600">
 						Your cart is empty
 					</p>
@@ -276,7 +276,7 @@ export default function CheckoutPage() {
 			<div className="min-h-screen bg-gray-50">
 				<Header />
 
-				<main className="mx-auto max-w-7xl px-4 py-8">
+				<main className="mx-auto max-w-7xl px-4 py-8 pt-30">
 
 					<div className="mb-8">
 

@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { itemsService } from "@/services/items";
 
 import { Item } from "@/lib/types";
+import { toast } from "sonner";
 
 export default function Home() {
 	const router = useRouter();
@@ -137,6 +138,10 @@ export default function Home() {
 						})
 					);
 				}, 2000);
+				
+				toast.success(
+					`${quantity} x ${item.itemName} added to cart!`
+				);
 			} catch (error) {
 				console.error(
 					"Failed to add item to cart:",
@@ -160,7 +165,7 @@ export default function Home() {
 		<div className="min-h-screen bg-gray-50">
 			<Header />
 
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-30">
 				<section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 p-8 md:p-10 mb-10 text-white shadow-xl">
 
 					<div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-white/10" />

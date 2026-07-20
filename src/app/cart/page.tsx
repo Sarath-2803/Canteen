@@ -38,7 +38,7 @@ export default function CartPage() {
             <div className="min-h-screen bg-gray-50">
                 <Header />
 
-                <main className="max-w-6xl mx-auto px-4 py-8">
+                <main className="max-w-6xl mx-auto px-4 py-8 pt-30">
                     <div className="text-center py-20">
                         Loading cart...
                     </div>
@@ -52,7 +52,7 @@ export default function CartPage() {
             <div className="min-h-screen bg-gray-50">
                 <Header />
 
-                <main className="max-w-6xl mx-auto px-4 py-8">
+                <main className="max-w-6xl mx-auto px-4 py-8 pt-30">
                     <div className="bg-white rounded-lg shadow p-12 text-center">
                         <h1 className="text-3xl font-bold text-gray-900 mb-4">
                             Your cart is empty
@@ -80,7 +80,7 @@ export default function CartPage() {
   <div className="min-h-screen bg-gray-50">
     <Header />
 
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-8 pt-30">
 
       {/* Heading */}
 
