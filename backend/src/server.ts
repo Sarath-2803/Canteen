@@ -37,7 +37,7 @@ const startServer = async () => {
         console.log('✅ Database connection established successfully.');
 
         // Run migrations before starting server
-        // await runMigrations();
+        await runMigrations();
 
         // Start listening
         app.listen(PORT, () => {
