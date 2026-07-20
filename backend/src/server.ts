@@ -15,14 +15,14 @@ const runMigrations = async () => {
     try {
         console.log('🔄 Running pending migrations...');
         const env = process.env.NODE_ENV || 'development';
-        // const { stdout, stderr } = await execPromise(`npx sequelize-cli db:migrate --env ${env}`);
-        const { stdout, stderr } = await execPromise(`npx sequelize-cli \
-                                                        --config config/config.cjs \
-                                                        --migrations-path migrations \
-                                                        --models-path models \
-                                                        --seeders-path seeders \
-                                                        db:migrate \
-                                                        --env production`);
+        const { stdout, stderr } = await execPromise(`npx sequelize-cli db:migrate --env ${env}`);
+        // const { stdout, stderr } = await execPromise(`npx sequelize-cli \
+        //                                                 --config config/config.cjs \
+        //                                                 --migrations-path migrations \
+        //                                                 --models-path models \
+        //                                                 --seeders-path seeders \
+        //                                                 db:migrate \
+        //                                                 --env production`);
         if (stdout) console.log(stdout);
         if (stderr) console.error(stderr);
         console.log('✅ Migrations completed.');
