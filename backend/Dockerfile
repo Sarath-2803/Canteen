@@ -8,6 +8,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
+RUN npm run build
+
 EXPOSE 5000
 
-CMD ["node", "server.js"]
+CMD ["node", "dist/erver.js"]
