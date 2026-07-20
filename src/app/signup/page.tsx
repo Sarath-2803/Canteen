@@ -130,9 +130,9 @@ function SignUpForm() {
 
 					<div className="max-w-md">
 						<h1 className="mb-6 text-5xl font-bold leading-tight">
-							Join Our
+							Join 
 							<br />
-							Canteen
+							Nosh & Go
 						</h1>
 
 						<p className="mb-8 text-lg text-green-100">
