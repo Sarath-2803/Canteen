@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '../../middleware/errorHandler.js';
 import { ValidationError } from '../../utils/errors.js';
 import { validate } from '../../utils/validate.js';
-import { createCartItemSchema } from './cartItem.dto.js';
+import { createCartItemSchema, updateCartItemSchema } from './cartItem.dto.js';
 import cartItemService from './cartItem.service.js';
 import CartItem from './cartItem.entity.js';
 
@@ -56,7 +56,7 @@ const updateCartItem = asyncHandler(async (req: Request, res: Response) => {
         throw new ValidationError('Cart item ID is required');
     }
 
-    const payload = validate(createCartItemSchema, req.body);
+    const payload = validate(updateCartItemSchema, req.body);
     const updatedCartItem = await cartItemService.updateCartItem(cartItemId, payload);
 
     res.status(200).json({

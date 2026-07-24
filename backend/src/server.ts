@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import app from './app.js';
 import sequelize from './config/database.js';
 import defineAssociations from './config/associations.js';
+import connectRedis from "./config/redis.js";
 
 dotenv.config();
 
@@ -42,6 +43,10 @@ const startServer = async () => {
         // Test database connection
         await sequelize.authenticate();
         console.log('✅ Database connection established successfully.');
+
+        // Connect to Redis
+        await connectRedis();
+        console.log('✅ Redis connection established successfully.');
 
         // Run migrations before starting server
         await runMigrations();

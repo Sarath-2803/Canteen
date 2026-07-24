@@ -11,7 +11,7 @@ class CartItemRepository {
     }
 
     async findAllByCartId(cartId: string): Promise<CartItem[]> {
-        return await CartItem.findAll({ where: { cartId } });
+        return await CartItem.findAll({ where: { cartId }, order: [['updatedAt', 'DESC']] });
     }
 
     async findAllByCartIdWithItems(cartId: string): Promise<CartItem[]> {
