@@ -8,11 +8,11 @@ const connectRedis = async () => {
     }
 
     client = createClient({
-        username: 'default',
-        password: 'wi2fmQGZ2S6779oBxco9H8DJ7IdUFPmT',
+        username: process.env.REDIS_USERNAME ,
+        password: process.env.REDIS_PASSWORD,
         socket: {
-            host: 'meeting-lunchroom-delightful-70019.db.redis.io',
-            port: 17799
+            host: process.env.REDIS_HOST,
+            port: Number(process.env.REDIS_PORT)
         }
     });
 
