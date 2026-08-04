@@ -26,6 +26,11 @@ export const uploadImage = async (
 };
 
 export const deleteImage = async (imageUrl: string): Promise<void> => {
+
+    if(imageUrl.includes("res.cloudinary.com") === false) {
+        console.log("Not a Cloudinary URL, skipping deletion:", imageUrl);
+        return;
+    }
     // Get everything after /upload/
     const uploadIndex = imageUrl.indexOf("/upload/");
 
