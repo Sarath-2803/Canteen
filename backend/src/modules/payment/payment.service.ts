@@ -20,6 +20,8 @@ const createRazorpayOrder = async (amount: number, orderId: string) => {
         notes: { orderId },
     });
 
+    console.log('Razorpay order created:', razorpayOrder);
+
     return {
         razorpayOrderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
@@ -33,7 +35,8 @@ const verifyPayment = async (
     razorpayOrderId: string,
     razorpayPaymentId: string,
     razorpaySignature: string,
-    paymentId: string
+    userId: string,
+    orderId: string
 ): Promise<PaymentDto> => {
     const body = razorpayOrderId + '|' + razorpayPaymentId;
     const expectedSignature = createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
@@ -41,21 +44,39 @@ const verifyPayment = async (
         .digest('hex');
 
     if (expectedSignature !== razorpaySignature) {
+        console.error('Invalid payment signature:', {
+            expectedSignature,
+            receivedSignature: razorpaySignature,
+        });
         throw new ValidationError('Invalid payment signature');
     }
 
     const transaction = await sequelize.transaction();
 
     try {
-        const updatedPayment = await paymentRepository.update(paymentId, {
-            paymentStatus: 'COMPLETED',
-            transactionId: razorpayPaymentId,
-        } as any, transaction);
+        const razorpayOrder =
+            await razorpay.orders.fetch(
+                razorpayOrderId
+            );
 
-        if (!updatedPayment) throw new NotFoundError('Payment not found');
+        const payment = await paymentRepository.create(
+            {
+                orderId: orderId,
+                userId: userId,
+                amount: razorpayOrder.amount as number / 100,
+                paymentMethod: "UPI",
+                paymentStatus: "COMPLETED",
+                transactionId: razorpayPaymentId,
+            },
+            transaction
+        );
+
+        console.log('Payment record created:', payment);
+
+        if (!payment) throw new NotFoundError('Payment record could not be created');
 
         const updatedOrder = await orderRepository.update(
-            updatedPayment.orderId,
+            payment.orderId,
             { status: 'CONFIRMED' } as any,
             transaction
         );
@@ -63,7 +84,7 @@ const verifyPayment = async (
         if (!updatedOrder) throw new NotFoundError('Associated order not found');
 
         await transaction.commit();
-        return toPaymentDto(updatedPayment);
+        return toPaymentDto(payment);
 
     } catch (error) {
         await transaction.rollback();

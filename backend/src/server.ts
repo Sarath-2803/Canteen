@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import app from './app.js';
 import sequelize from './config/database.js';
 import defineAssociations from './config/associations.js';
+import connectRedis from "./config/redis.js";
 
 dotenv.config();
 
@@ -16,13 +17,20 @@ const runMigrations = async () => {
         console.log('🔄 Running pending migrations...');
         const env = process.env.NODE_ENV || 'development';
         const { stdout, stderr } = await execPromise(`npx sequelize-cli db:migrate --env ${env}`);
+        // const { stdout, stderr } = await execPromise(`npx sequelize-cli \
+        //                                                 --config config/config.cjs \
+        //                                                 --migrations-path migrations \
+        //                                                 --models-path models \
+        //                                                 --seeders-path seeders \
+        //                                                 db:migrate \
+        //                                                 --env production`);
         if (stdout) console.log(stdout);
         if (stderr) console.error(stderr);
         console.log('✅ Migrations completed.');
-        const { stdout: seedStdout, stderr: seedStderr } = await execPromise(`npx sequelize-cli db:seed:all --env ${env}`);
-        if (seedStdout) console.log(seedStdout);
-        if (seedStderr) console.error(seedStderr);
-        console.log('✅ Seeding completed.');
+        // const { stdout: seedStdout, stderr: seedStderr } = await execPromise(`npx sequelize-cli db:seed:all --env ${env}`);
+        // if (seedStdout) console.log(seedStdout);
+        // if (seedStderr) console.error(seedStderr);
+        // console.log('✅ Seeding completed.');
     } catch (error) {
         console.error('❌ Migration error:', error);
         throw error;
@@ -31,10 +39,14 @@ const runMigrations = async () => {
 
 const startServer = async () => {
     try {
-        defineAssociations(); 
+        defineAssociations();
         // Test database connection
         await sequelize.authenticate();
         console.log('✅ Database connection established successfully.');
+
+        // Connect to Redis
+        await connectRedis();
+        console.log('✅ Redis connection established successfully.');
 
         // Run migrations before starting server
         await runMigrations();

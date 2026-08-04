@@ -1,11 +1,12 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { usersService } from "@/services/users";
 import { useState } from "react";
 
 export default function UserProfilePage() {
   const { user, login } = useAuth();
-
+  const token = localStorage.getItem("token") || "";
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [phone, setPhone] = useState(user?.phone || "");
@@ -13,22 +14,24 @@ export default function UserProfilePage() {
 
   if (!user) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
 
-    const updatedUser = {
+    const data = {
       ...user,
       firstName,
       lastName,
       phone,
-      // Email is not included - it's read-only
     };
+
+    const updatedUser = (await usersService.updateProfile(user.userId, data)).data;
 
     // Update localStorage
     localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.setItem("token", localStorage.getItem("token") || "");
 
     // Update AuthContext
-    login(updatedUser);
+    login(updatedUser,token);
 
     setTimeout(() => {
       setSaving(false);

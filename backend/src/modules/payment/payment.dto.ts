@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const paymentMethodEnum = z.enum(['CREDIT_CARD', 'UPI', 'NET_BANKING']);
 export const paymentStatusEnum = z.enum(['PENDING', 'COMPLETED', 'FAILED']);
 
-const paymentIdSchema = z.uuid('Invalid payment ID format');
+const paymentId = z.uuid('Invalid payment ID format');
+const transactionIdSchema = z.string('Invalid transaction ID format');
 const orderIdSchema = z.uuid('Invalid order ID format');
 const userIdSchema = z.uuid('Invalid user ID format');
 const amountSchema = z.number().min(0, 'Amount must be a positive number');
@@ -12,6 +13,7 @@ export const createPaymentSchema = z.object({
   orderId: orderIdSchema,
   userId: userIdSchema,
   paymentMethod: paymentMethodEnum,
+  transactionId: transactionIdSchema,
   amount: amountSchema,
   paymentStatus: paymentStatusEnum.optional().default('PENDING'),
 });
@@ -23,12 +25,13 @@ export const updatePaymentSchema = z.object({
 });
 
 export const paymentSchema = z.object({
-  paymentId: paymentIdSchema,
+  paymentId,
   orderId: orderIdSchema,
   userId: userIdSchema,
   paymentMethod: paymentMethodEnum,
   amount: amountSchema,
   paymentStatus: paymentStatusEnum,
+  transactionId: transactionIdSchema,
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
 });

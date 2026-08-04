@@ -2,415 +2,526 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback } from "react";
+
+import Header from "@/components/Header";
+
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import Header from "@/components/Header"; 
-import { useState, useEffect } from "react";
-import { itemsApi } from "@/lib/api";
 
-// Define the Item type based on your backend model
-export interface itemType {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  categoryId: string;
-  imageUrl: string;
-  available: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { itemsService } from "@/services/items";
 
+import { Item } from "@/lib/types";
+import { toast } from "sonner";
 
 export default function Home() {
 	const router = useRouter();
+
 	const { addToCart, cart } = useCart();
 	const { user, loading: authLoading } = useAuth();
-	const [menuItems, setMenuItems] = useState<itemType[]>([]);
+
+	const [menuItems, setMenuItems] = useState<Item[]>([]);
 	const [loading, setLoading] = useState(true);
+
 	const [quantities, setQuantities] = useState<Record<string, number>>({});
 	const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
-	const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-	// Redirect admin users to their dashboard
+	// Redirect admin users away from customer menu
 	useEffect(() => {
-		if (!authLoading && user && user.role === "admin") {
-			router.push("/admin/dashboard");
+		if (!authLoading && user?.role?.toLowerCase() === "admin") {
+			router.replace("/admin/dashboard");
 		}
-	}, [user, authLoading, router]);
+	}, [authLoading, user, router]);
 
+	// Fetch menu items
 	useEffect(() => {
 		const fetchItems = async () => {
 			try {
-				const data = await itemsApi.getAll();
-				setMenuItems(data);
+				setLoading(true);
 
-				console.log("Fetched menu items:", data);
-				
-				// Initialize quantities to 1 for all available items
+				const response = await itemsService.getAll();
+
+				// Supports both paginated and plain responses
+				const items =
+					response?.data?.data ??
+					response?.data ??
+					[];
+
+				setMenuItems(items);
+
 				const initialQuantities: Record<string, number> = {};
-				data.rows.forEach((item: itemType) => {
-					if (item.available) {
-						initialQuantities[item.id] = 1;
+
+				items.forEach((item: Item) => {
+					if (
+						item.isAvailable
+					) {
+						initialQuantities[item.itemId] = 1;
 					}
 				});
+
 				setQuantities(initialQuantities);
 			} catch (error) {
-				console.error("Failed to fetch menu items:", error);
+				console.error(
+					"Failed to fetch menu items:",
+					error
+				);
 			} finally {
 				setLoading(false);
 			}
 		};
+
 		fetchItems();
 	}, []);
 
-	//const categories = ["All", ...new Set(menuItems.map((item) => item.category))];
+	const cartCount = useMemo(
+		() =>
+			cart.reduce(
+				(sum, item) =>
+					sum + item.quantity,
+				0
+			),
+		[cart]
+	);
 
-	// const filteredItems =
-	// 	selectedCategory === "All"
-	// 		? menuItems
-	// 		: menuItems.filter((item) => item.category === selectedCategory);
+	const handleQuantityChange = useCallback(
+		(itemId: string, change: number) => {
+			setQuantities((prev) => {
+				const current =
+					prev[itemId] ?? 0;
 
-	const handleQuantityChange = (itemId: string, change: number) => {
-		setQuantities((prev) => {
-			const currentQty = prev[itemId] || 0;
-			const newQty = Math.max(0, currentQty + change);
-			return { ...prev, [itemId]: newQty };
-		});
-	};
+				return {
+					...prev,
+					[itemId]: Math.max(
+						0,
+						current + change
+					),
+				};
+			});
+		},
+		[]
+	);
 
-	const handleAddToCart = async (item: itemType) => {
-		const quantity = quantities[item.id] || 1;
-
-		try {
-			// Get userId from localStorage
-			const userString = localStorage.getItem("user");
-			console.log("User from localStorage:", userString);
-			if (!userString) {
+	const handleAddToCart = useCallback(
+		async (item: Item) => {
+			if (!user) {
 				router.push("/login");
 				return;
 			}
-			const user = JSON.parse(userString);
 
-			// Call addToCart with the authenticated user id
-			await addToCart(user.userId, item.id, quantity);
+			// console.log("user is", user);
 
-			// Reset quantity and show success feedback
-			setQuantities((prev) => ({ ...prev, [item.id]: 0 }));
-			setAddedItems((prev) => ({ ...prev, [item.id]: true }));
-			setTimeout(() => {
-				setAddedItems((prev) => ({ ...prev, [item.id]: false }));
-			}, 2000);
-		} catch (error) {
-			console.error("Failed to add item to cart:", error);
-			alert("Failed to add item to cart. Please try again.");
-		}
-	};
+			const quantity =
+				quantities[item.itemId] || 1;
+
+			try {
+				await addToCart(
+					item.itemId,
+					quantity
+				);
+
+				setQuantities((prev) => ({
+					...prev,
+					[item.itemId]: 1,
+				}));
+
+				setAddedItems((prev) => ({
+					...prev,
+					[item.itemId]: true,
+				}));
+
+				setTimeout(() => {
+					setAddedItems(
+						(prev) => ({
+							...prev,
+							[item.itemId]:
+								false,
+						})
+					);
+				}, 2000);
+				
+				toast.success(
+					`${quantity} x ${item.itemName} added to cart!`
+				);
+			} catch (error) {
+				console.error(
+					"Failed to add item to cart:",
+					error
+				);
+
+				alert(
+					"Failed to add item to cart. Please try again."
+				);
+			}
+		},
+		[
+			user,
+			router,
+			addToCart,
+			quantities,
+		]
+	);
 
 	return (
 		<div className="min-h-screen bg-gray-50">
 			<Header />
 
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<div className="flex justify-between items-center mb-8">
-					<h1 className="text-4xl font-bold text-gray-900">Menu</h1>
-					{cart.length > 0 && (
-						<button
-							onClick={() => router.push("/checkout")}
-							className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg"
-						>
-							Checkout ({cart.length})
-						</button>
-					)}
-				</div>
+			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-30">
+				<section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 p-8 md:p-10 mb-10 text-white shadow-xl">
 
-				{/* Category Filter */}
-				{/* <div className="mb-8">
-					<h2 className="text-lg font-semibold text-gray-900 mb-4">Categories</h2>
-					<div className="flex flex-wrap gap-3">
-						{categories.map((category) => (
+					<div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-white/10" />
+					<div className="absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-white/10" />
+
+					<div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+
+						<div className="space-y-4">
+
+							<div className="inline-flex items-center rounded-full bg-white/20 px-4 py-1 backdrop-blur">
+								<span className="text-sm font-medium tracking-wide">
+									🍴 Fresh • Fast • Affordable
+								</span>
+							</div>
+
+							<h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
+								Nosh<span className="text-yellow-300">&</span>Go
+							</h1>
+
+							<p className="max-w-xl text-lg text-green-100">
+								Skip the queue and order your favourite meals in seconds.
+								Freshly prepared food delivered right from your college canteen.
+							</p>
+
+						</div>
+
+						{cartCount > 0 && (
 							<button
-								key={category}
-								onClick={() => setSelectedCategory(category)}
-								className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-									selectedCategory === category
-										? "bg-green-500 text-white"
-										: "bg-white text-gray-700 hover:bg-gray-100"
-								}`}
+								onClick={() => router.push("/checkout")}
+								className="rounded-2xl bg-white text-green-700 font-semibold px-8 py-4 shadow-xl hover:scale-105 transition"
 							>
-								{category}
+								Proceed to Checkout • {cartCount} Items
 							</button>
-						))}
+						)}
+
 					</div>
+
+				</section>
+
+				{/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+
+					<div className="rounded-2xl bg-white p-5 shadow">
+						<p className="text-3xl font-bold text-green-600">
+							{menuItems.length}
+						</p>
+						<p className="text-gray-500">
+							Menu Items
+						</p>
+					</div>
+
+					<div className="rounded-2xl bg-white p-5 shadow">
+						<p className="text-3xl font-bold text-green-600">
+							Fresh
+						</p>
+						<p className="text-gray-500">
+							Everyday
+						</p>
+					</div>
+
+					<div className="rounded-2xl bg-white p-5 shadow">
+						<p className="text-3xl font-bold text-green-600">
+							5★
+						</p>
+						<p className="text-gray-500">
+							Student Rated
+						</p>
+					</div>
+
+					<div className="rounded-2xl bg-white p-5 shadow">
+						<p className="text-3xl font-bold text-green-600">
+							Fast
+						</p>
+						<p className="text-gray-500">
+							Checkout
+						</p>
+					</div>
+
 				</div> */}
 
 				{loading ? (
-					<div className="text-center py-12">
-						<p className="text-xl text-gray-600">Loading menu...</p>
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+						{[...Array(6)].map((_, i) => (
+
+							<div
+								key={i}
+								className="rounded-3xl overflow-hidden bg-white shadow animate-pulse"
+							>
+
+								<div className="h-52 bg-gray-200" />
+
+								<div className="p-5 space-y-3">
+
+									<div className="h-5 rounded bg-gray-200" />
+
+									<div className="h-4 w-2/3 rounded bg-gray-200" />
+
+									<div className="h-11 rounded-xl bg-gray-200" />
+
+								</div>
+
+							</div>
+
+						))}
+
+					</div>
+				) : menuItems.length === 0 ? (
+					<div className="bg-white rounded-3xl shadow p-16 text-center">
+
+						<div className="text-7xl">
+							🍽️
+						</div>
+
+						<h2 className="mt-6 text-3xl font-bold text-gray-900">
+							Nothing Available
+						</h2>
+
+						<p className="mt-2 text-gray-500">
+							The kitchen is preparing today&apos;s menu.
+						</p>
+
 					</div>
 				) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-					{menuItems.map((item: itemType) => {
-						const quantity = quantities[item.id] || 0;
-						const isAdded = addedItems[item.id];
+						{menuItems.map(
+							(item) => {
+								const quantity =
+									quantities[
+									item.itemId
+									] || 0;
 
-						return (
-							<div
-								key={item.id}
-								className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 ${!item.available ? 'opacity-75' : ''}`}
-							>
-								<div className="relative h-48 bg-gradient-to-br from-gray-200 to-gray-300">
-									<Image
-										src={item.imageUrl}
-										alt={item.name}
-										fill
-										className="object-cover"
-										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-										priority={false}
-										onError={(e) => {
-											e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-size='18' fill='%239ca3af' text-anchor='middle' dominant-baseline='middle'%3EImage not available%3C/text%3E%3C/svg%3E";
-										}}
-									/>
-									{!item.available && (
-										<div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center">
-											<span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold text-lg">
-												NOT AVAILABLE
-											</span>
-										</div>
-									)}
-								</div>
-								<div className="p-4">
-									{/* <p className="text-xs text-green-600 font-semibold mb-1">
-										{item.category}
-									</p> */}
-									<h3 className="text-lg font-semibold text-gray-900 mb-2">
-										{item.name}
-									</h3>
-									<p className="text-gray-700 font-medium mb-3">
-										₹{item.price}
-									</p>
+								const isAdded =
+									addedItems[
+									item.itemId
+									];
 
-									{/* Quantity Controls */}
-									<div className="flex items-center gap-3 mb-3">
-										<button
-											onClick={() => handleQuantityChange(item.id, -1)}
-											disabled={quantity === 0 || !item.available}
-											className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												className="h-4 w-4 text-gray-700"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M20 12H4"
-												/>
-											</svg>
-										</button>
+								const available =
+									item.isAvailable;
 
-										<span className="font-semibold text-gray-900 w-12 text-center text-lg">
-											{quantity}
-										</span>
+								const name =
+									item.itemName;
 
-										<button
-											onClick={() => handleQuantityChange(item.id, 1)}
-											disabled={!item.available}
-											className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												className="h-4 w-4 text-gray-700"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M12 4v16m8-8H4"
-												/>
-											</svg>
-										</button>
-									</div>
-
-									{/* Add to Cart Button */}
-									<button
-										onClick={() => handleAddToCart(item)}
-										disabled={(quantity === 0 && !isAdded) || !item.available}
-										className={`w-full ${
-											!item.available
-												? "bg-gray-400 cursor-not-allowed"
-												: isAdded
-												? "bg-green-600"
-												: quantity === 0
-												? "bg-gray-300 cursor-not-allowed"
-												: "bg-green-500 hover:bg-green-600"
-										} text-white font-semibold py-2 rounded-lg transition-colors duration-300 flex items-center justify-center gap-2`}
+								return (
+									<div
+										key={
+											item.itemId
+										}
+										className={`group overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${!available ? "opacity-80" : ""
+											}`}
 									>
-										{isAdded ? (
-											<>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													className="h-5 w-5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M5 13l4 4L19 7"
-													/>
-												</svg>
-												Added to Cart
-											</>
-										) : (
-											<>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													className="h-5 w-5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-													/>
-												</svg>
-												{quantity === 0
-													? "Select Quantity"
-													: `Add ${quantity} to Cart`}
-											</>
-										)}
-									</button>
+										<div className="relative h-56 overflow-hidden">
+											<Image
+												src={
+													item.imageUrl ||
+													"/placeholder-food.jpg"
+												}
+												alt={
+													name
+												}
+												fill
+												className="object-cover transition duration-500 group-hover:scale-110"
+												sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
+											/>
 
-									{/* Total Price Display */}
-									{quantity > 0 && (
-										<p className="text-center text-sm text-gray-600 mt-2">
-											Total: ₹{item.price * quantity}
-										</p>
-									)}
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			)}
+											<div className="absolute right-4 top-4 rounded-full bg-white px-4 py-2 shadow-lg">
+
+												<span className="font-bold text-green-600">
+													₹{item.price}
+												</span>
+
+											</div>
+
+											<div className="absolute left-4 top-4">
+
+												<span
+													className={`rounded-full px-3 py-1 text-xs font-semibold text-white
+
+        ${available
+															? "bg-green-500"
+															: "bg-red-500"
+														}`}
+												>
+													{available ? "Available" : "Unavailable"}
+												</span>
+
+											</div>
+										</div>
+
+										<div className="p-4">
+											<h3 className="text-lg font-semibold text-gray-900 mb-2">
+												{
+													name
+												}
+											</h3>
+
+											<p className="mt-2 text-sm text-gray-500 line-clamp-2">
+												{item.itemDescription}
+											</p>
+
+											<div className="rounded-2xl bg-gray-50 px-4 py-3 flex justify-between items-center">
+												<button
+													onClick={() =>
+														handleQuantityChange(
+															item.itemId,
+															-1
+														)
+													}
+													disabled={
+														quantity ===
+														0 ||
+														!available
+													}
+													className="w-8 h-8 rounded-full bg-gray-200 text-black hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
+												>
+													-
+												</button>
+
+												<span className="font-semibold text-gray-900 w-12 text-center text-lg">
+													{
+														quantity
+													}
+												</span>
+
+												<button
+													onClick={() =>
+														handleQuantityChange(
+															item.itemId,
+															1
+														)
+													}
+													disabled={
+														!available
+													}
+													className="w-8 h-8 rounded-full bg-gray-200 text-black hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed flex items-center justify-center"
+												>
+													+
+												</button>
+											</div>
+
+											<button
+												onClick={() =>
+													handleAddToCart(
+														item
+													)
+												}
+												disabled={
+													(quantity ===
+														0 &&
+														!isAdded) ||
+													!available
+												}
+												className={`w-full text-white font-semibold py-2 rounded-lg transition-colors duration-300 ${!available
+													? "bg-gray-400 cursor-not-allowed"
+													: isAdded
+														? "bg-green-600"
+														: quantity ===
+															0
+															? "bg-gray-300 cursor-not-allowed"
+															: "bg-green-500 hover:bg-green-600"
+													}`}
+											>
+												{isAdded
+													? "Added to Cart"
+													: quantity ===
+														0
+														? "Select Quantity"
+														: `Add ${quantity} to Cart`}
+											</button>
+
+											{quantity >
+												0 && (
+													<div className="mt-4 rounded-xl bg-green-50 px-4 py-3 flex justify-between">
+
+														<span className="text-gray-600">
+															Total
+														</span>
+
+														<span className="font-bold text-green-600">
+															₹{item.price * quantity}
+														</span>
+
+													</div>
+												)}
+										</div>
+									</div>
+								);
+							}
+						)}
+					</div>
+				)}
 			</main>
 
-			<footer className="bg-white border-t mt-16">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-					<div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+			<footer className="mt-20 border-t bg-white">
+
+				<div className="max-w-7xl mx-auto px-6 py-12">
+
+					<div className="flex flex-col md:flex-row justify-between gap-10">
+
 						<div>
-							<div className="flex items-center gap-2 mb-4">
-								<span className="text-2xl">🍵</span>
-							</div>
-							<p className="text-sm text-gray-600">
-								© 2024 Food Ordering. All rights reserved.
+
+							<h2 className="text-2xl font-bold text-green-600">
+								🍽 Nosh&Go
+							</h2>
+
+							<p className="mt-3 max-w-md text-gray-500">
+								Skip the queue. Order instantly. Enjoy fresh meals prepared just for you.
 							</p>
+
 						</div>
 
-						<div>
-							<h4 className="font-semibold text-gray-900 mb-4">About Us</h4>
-							<ul className="space-y-2">
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Our Story
-									</a>
-								</li>
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Blog
-									</a>
-								</li>
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Careers
-									</a>
-								</li>
-							</ul>
+						<div className="grid grid-cols-2 gap-10">
+
+							<div>
+
+								<h3 className="font-semibold text-gray-900">
+									Company
+								</h3>
+
+								<div className="mt-3 space-y-2 text-gray-500">
+
+									<p>About</p>
+									<p>Contact</p>
+									<p>Support</p>
+
+								</div>
+
+							</div>
+
+							<div>
+
+								<h3 className="font-semibold text-gray-900">
+									Legal
+								</h3>
+
+								<div className="mt-3 space-y-2 text-gray-500">
+
+									<p>Privacy</p>
+									<p>Terms</p>
+									<p>Cookies</p>
+
+								</div>
+
+							</div>
+
 						</div>
 
-						<div>
-							<h4 className="font-semibold text-gray-900 mb-4">Support</h4>
-							<ul className="space-y-2">
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Help Center
-									</a>
-								</li>
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Contact Us
-									</a>
-								</li>
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										FAQs
-									</a>
-								</li>
-							</ul>
-						</div>
-
-						<div>
-							<h4 className="font-semibold text-gray-900 mb-4">Legal</h4>
-							<ul className="space-y-2">
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Terms of Service
-									</a>
-								</li>
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Privacy Policy
-									</a>
-								</li>
-								<li>
-									<a
-										href="#"
-										className="text-gray-600 hover:text-gray-900 text-sm"
-									>
-										Cookie Policy
-									</a>
-								</li>
-							</ul>
-						</div>
 					</div>
+
+					<div className="mt-10 border-t pt-6 text-center text-sm text-gray-500">
+
+						© 2026 Nosh&Go • Smart College Food Ordering Platform
+
+					</div>
+
 				</div>
+
 			</footer>
 		</div>
 	);

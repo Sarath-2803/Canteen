@@ -25,13 +25,14 @@ const createRazorpayOrder = asyncHandler(async (req: Request, res: Response) => 
 
 // Verify payment after frontend completes payment
 const verifyPayment = asyncHandler(async (req: Request, res: Response) => {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentId } = req.body;
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, userId, orderId } = req.body;
 
     const payment = await paymentService.verifyPayment(
         razorpayOrderId,
         razorpayPaymentId,
         razorpaySignature,
-        paymentId
+        userId,
+        orderId
     );
 
     res.status(200).json({

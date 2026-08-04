@@ -4,7 +4,7 @@ import {z} from 'zod';
 const cartItemIdSchema = z.uuid();
 const cartIdSchema = z.uuid();
 const itemIdSchema = z.uuid();
-const quantitySchema = z.number().int().positive();
+const quantitySchema = z.coerce.number().int().positive();
 
 export const createCartItemSchema = z.object({
     cartId: cartIdSchema,

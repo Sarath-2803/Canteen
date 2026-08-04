@@ -1,39 +1,59 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useOrder } from "@/contexts/OrderContext";
+
 import Header from "@/components/Header";
-import { useEffect } from "react";
+
+import { useOrder } from "@/contexts/OrderContext";
+
+import {
+	Order,
+	OrderStatus,
+} from "@/lib/types";
 
 export default function OrdersPage() {
 	const router = useRouter();
-	const { orders, cancelOrder, deleteOrder, loading, refreshOrders } = useOrder();
 
-	// Refresh orders on mount
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	useEffect(() => {
-		refreshOrders();
-	}, []);
+	const {
+		orders,
+		cancelOrder,
+		deleteOrder,
+		loading,
+	} = useOrder();
 
-	const getStatusColor = (status: string) => {
+	const getStatusColor = (
+		status: OrderStatus
+	) => {
 		switch (status) {
-			case "completed":
+			case "CONFIRMED":
 				return "bg-green-100 text-green-800";
-			case "pending":
+
+			case "PENDING":
 				return "bg-yellow-100 text-yellow-800";
-			case "canceled":
+
+			case "CANCELLED":
 				return "bg-red-100 text-red-800";
+
 			default:
 				return "bg-gray-100 text-gray-800";
 		}
 	};
 
+	const canCancel = (
+		order: Order
+	) =>
+		order.status === "PENDING" ||
+		order.status === "CONFIRMED";
+
 	if (loading) {
 		return (
 			<div className="min-h-screen bg-gray-50">
 				<Header />
+
 				<main className="max-w-6xl mx-auto px-4 py-8">
-					<p className="text-center text-gray-600">Loading orders...</p>
+					<p className="text-center text-gray-600">
+						Loading orders...
+					</p>
 				</main>
 			</div>
 		);
@@ -43,90 +63,181 @@ export default function OrdersPage() {
 		<div className="min-h-screen bg-gray-50">
 			<Header />
 
-			<main className="max-w-6xl mx-auto px-4 py-8">
-				<h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
+			<main className="mx-auto max-w-7xl px-4 py-8">
+  <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 className="text-4xl font-bold text-gray-900">
+        My Orders
+      </h1>
+      <p className="mt-1 text-gray-500">
+        Track and manage your recent orders
+      </p>
+    </div>
 
-				{orders.length === 0 ? (
-					<div className="text-center py-12">
-						<p className="text-gray-600 mb-4">No orders yet</p>
-						<button
-							onClick={() => router.push("/")}
-							className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg"
-						>
-							Start Ordering
-						</button>
-					</div>
-				) : (
-					<div className="space-y-4">
-						{orders.map((order) => (
-							<div
-								key={order.id}
-								className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
-							>
-								<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-									<div>
-										<h3 className="text-lg font-semibold text-gray-900">
-											Order #{order.id.slice(0, 8)}
-										</h3>
-										<p className="text-sm text-gray-600">
-											{new Date(order.createdAt).toLocaleDateString()}
-										</p>
-									</div>
-									<div className="flex gap-2 flex-wrap">
-										<span
-											className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-												order.status
-											)}`}
-										>
-											{order.status}
-										</span>
-									</div>
-								</div>
+    <div className="rounded-xl bg-green-50 px-5 py-3">
+      <p className="text-sm text-gray-500">
+        Total Orders
+      </p>
+      <p className="text-2xl font-bold text-green-600">
+        {orders.length}
+      </p>
+    </div>
+  </div>
 
-								<div className="mb-4">
-									<h4 className="font-semibold text-gray-700 mb-2">Items:</h4>
-									<div className="space-y-1">
-										{order.items.map((item, idx) => (
-											<p key={idx} className="text-sm text-gray-600">
-												{item.name} x{item.quantity} - ₹{item.price * item.quantity}
-											</p>
-										))}
-									</div>
-								</div>
+  {orders.length === 0 ? (
+    <div className="rounded-3xl border border-dashed bg-white py-24 text-center shadow-sm">
+      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-4xl">
+        🍽️
+      </div>
 
-								<div className="border-t pt-4 mb-4 flex justify-between items-center">
-									<p className="text-lg font-bold text-gray-900">
-										Total: ₹{order.totalAmount}
-									</p>
-								</div>
+      <h2 className="text-2xl font-bold text-gray-900">
+        No Orders Yet
+      </h2>
 
-								<div className="flex gap-2 flex-wrap">
-									<button
-										onClick={() => router.push(`/orders/${order.id}`)}
-										className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-sm"
-									>
-										View Details
-									</button>
-									{order.status !== "canceled" && order.status !== "completed" && (
-										<button
-											onClick={async () => await cancelOrder(order.id)}
-											className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-2 rounded-lg text-sm"
-										>
-											Cancel Order
-										</button>
-									)}
-									<button
-										onClick={async () => await deleteOrder(order.id)}
-										className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg text-sm"
-									>
-										Delete
-									</button>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
-			</main>
+      <p className="mt-2 text-gray-500">
+        Looks like you haven&apos;t ordered anything.
+      </p>
+
+      <button
+        onClick={() => router.push("/")}
+        className="mt-8 rounded-xl bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-700"
+      >
+        Browse Menu
+      </button>
+    </div>
+  ) : (
+    <div className="space-y-6">
+      {orders.map((order) => (
+        <div
+          key={order.orderId}
+          className="overflow-hidden rounded-3xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+        >
+          {/* Header */}
+
+          <div className="border-b bg-gray-50 px-6 py-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Order #{order.orderId.slice(0, 8)}
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {new Date(order.createdAt).toLocaleString("en-IN")}
+                </p>
+              </div>
+
+              <span
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${getStatusColor(
+                  order.status
+                )}`}
+              >
+                {order.status}
+              </span>
+
+            </div>
+          </div>
+
+          {/* Items */}
+
+          <div className="space-y-3 p-6">
+            {order.items?.length ? (
+              order.items.map((item) => (
+                <div
+                  key={item.orderItemId}
+                  className="flex items-center justify-between rounded-2xl bg-gray-50 p-4"
+                >
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {item.itemName}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Qty {item.quantity} × ₹{item.unitPrice}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold text-green-600">
+                      ₹{item.subtotal}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">
+                No item details available.
+              </p>
+            )}
+          </div>
+
+          {/* Footer */}
+
+          <div className="flex flex-col gap-5 border-t bg-gray-50 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+
+            <div>
+              <p className="text-sm text-gray-500">
+                Total Amount
+              </p>
+
+              <h2 className="text-3xl font-bold text-green-600">
+                ₹{order.totalAmount}
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+
+              <button
+                onClick={() =>
+                  router.push(`/orders/${order.orderId}`)
+                }
+                className="rounded-xl bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700"
+              >
+                View Details
+              </button>
+
+              {canCancel(order) && (
+                <button
+                  disabled={loading}
+                  onClick={async () => {
+                    if (
+                      confirm(
+                        "Cancel this order?"
+                      )
+                    ) {
+                      await cancelOrder(order.orderId);
+                    }
+                  }}
+                  className="rounded-xl bg-amber-500 px-5 py-2.5 font-medium text-white transition hover:bg-amber-600 disabled:opacity-50"
+                >
+                  Cancel Order
+                </button>
+              )}
+
+              <button
+                disabled={loading}
+                onClick={async () => {
+                  if (
+                    confirm(
+                      "Delete this order from history?"
+                    )
+                  ) {
+                    await deleteOrder(order.orderId);
+                  }
+                }}
+                className="rounded-xl bg-red-500 px-5 py-2.5 font-medium text-white transition hover:bg-red-600 disabled:opacity-50"
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</main>
 		</div>
 	);
 }

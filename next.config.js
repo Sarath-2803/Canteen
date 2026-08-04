@@ -22,6 +22,12 @@ const nextConfig = {
 				hostname: "www.chefkunalkapur.com",
 				pathname: "/**",
 			},
+			{
+				protocol: "https",
+				hostname: "res.cloudinary.com",
+				pathname: "/**",
+				port: "",
+			}
 		],
 	},
 };

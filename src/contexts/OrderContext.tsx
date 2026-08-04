@@ -1,207 +1,343 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
-import { ordersApi } from "@/lib/api";
-import { useCart, CartItem } from "./CartContext";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+
 import { useAuth } from "./AuthContext";
+import { useCart } from "./CartContext";
 
-export interface OrderItem {
-	id: number;
-	name: string;
-	price: number;
-	quantity: number;
-}
+import { ordersService } from "@/services/orders";
 
-export interface Order {
-	id: string;
-	userId: string;
-	items: OrderItem[];
-	totalAmount: number;
-	status: "pending" | "completed" | "canceled";
-	createdAt: Date;
-	updatedAt: Date;
-}
+import {
+  CartItem,
+  Order,
+  OrderStatus,
+} from "@/lib/types";
 
 interface OrderContextType {
-	orders: Order[];
-	currentOrderItems: CartItem[]; // Cart items as current order
-	currentOrderTotal: number; // Total amount of current order
-	loading: boolean;
-	checkout: (userId: string, paymentMethod: string) => Promise<Order>; // Checkout from cart
-	addOrder: (userId: string, items: OrderItem[], totalAmount: number) => Promise<Order>;
-	updateOrderStatus: (orderId: string, status: Order["status"]) => Promise<void>;
-	cancelOrder: (orderId: string) => Promise<void>;
-	deleteOrder: (orderId: string) => Promise<void>;
-	getOrderById: (orderId: string) => Order | undefined;
-	refreshOrders: () => Promise<void>;
+  orders: Order[];
+  loading: boolean;
+
+  page: number;
+  totalPages: number;
+
+  currentOrderItems: CartItem[];
+  currentOrderTotal: number;
+
+  checkout: (
+    paymentMethod: string
+  ) => Promise<Order>;
+
+  updateOrderStatus: (
+    orderId: string,
+    status: OrderStatus
+  ) => Promise<void>;
+
+  cancelOrder: (
+    orderId: string
+  ) => Promise<void>;
+
+  deleteOrder: (
+    orderId: string
+  ) => Promise<void>;
+
+  getOrderById: (
+    orderId: string
+  ) => Order | undefined;
+
+  refreshOrders: (
+    page?: number
+  ) => Promise<void>;
+
+  refreshAllOrders: (
+    page?: number
+  ) => Promise<void>;
 }
 
-const OrderContext = createContext<OrderContextType | undefined>(undefined);
+const OrderContext =
+  createContext<OrderContextType | null>(
+    null
+  );
 
-export function OrderProvider({ children }: { children: React.ReactNode }) {
-	const [orders, setOrders] = useState<Order[]>([]);
-	const [loading, setLoading] = useState(false);
-	const { cart, clearCart } = useCart();
+export function OrderProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user } = useAuth();
+  const { cart, refreshCart } = useCart();
 
-	// Current order items from cart
-	const currentOrderItems = cart;
-	
-	// Calculate total amount from cart items
-	const currentOrderTotal = cart.reduce((sum, cartItem) => {
-		return sum + ((cartItem.item?.price ?? 0) * cartItem.quantity);
-	}, 0);
+  const [orders, setOrders] = useState<
+    Order[]
+  >([]);
 
-	const { user, token } = useAuth();
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-	// Load orders from backend only when user is authenticated
-	useEffect(() => {
-		if (token && user) {
-			refreshOrders();
-		}
-	}, [token, user]);
+  const [loading, setLoading] =
+    useState(false);
 
-	const refreshOrders = async () => {
-		// Only fetch orders if user is authenticated
-		if (!token || !user) {
-			console.log('No token or user, skipping order refresh');
-			return;
-		}
+  const currentOrderItems = useMemo(
+    () => cart,
+    [cart]
+  );
 
-		try {
-			setLoading(true);
-			// Fetch orders for the current user only
-			// console.log('Fetching orders for user:', user.userId);
-			const response = await ordersApi.getByUserId(user.userId);
-			if (response.success) {
-				// Ensure each order has an items array
-				const ordersWithItems = response.data.map((order: any) => ({
-					...order,
-					items: order.items || []
-				}));
-				setOrders(ordersWithItems);
-			}
-		} catch (error) {
-			console.error("Failed to load orders:", error);
-			// Don't throw error to prevent breaking the UI
-		} finally {
-			setLoading(false);
-		}
-	};
+  const currentOrderTotal = useMemo(
+    () =>
+      cart.reduce(
+        (sum, item) =>
+          sum +
+          (item.item?.price ?? 0) *
+          item.quantity,
+        0
+      ),
+    [cart]
+  );
 
-	// Checkout function - creates order from cart
-	const checkout = async (userId: string, paymentMethod: string): Promise<Order> => {
-		try {
-			setLoading(true);
-			const response = await ordersApi.checkout(userId, paymentMethod);
-			if (response.success) {
-				const newOrder = {
-					...response.data,
-					items: response.data.items || []
-				};
-				setOrders((prev) => [newOrder, ...prev]);
-				// Cart will be cleared by the backend
-				return newOrder;
-			}
-			throw new Error(response.message || "Failed to checkout");
-		} catch (error) {
-			console.error("Failed to checkout:", error);
-			throw error;
-		} finally {
-			setLoading(false);
-		}
-	};
+  const refreshOrders =
+    useCallback(
+      async (
+        pageNumber = page
+      ) => {
+        if (
+          !user?.userId
+        ) {
+          setOrders([]);
+          return;
+        }
 
-	const addOrder = async (userId: string, items: OrderItem[], totalAmount: number): Promise<Order> => {
-		try {
-			const response = await ordersApi.create(userId, totalAmount, items);
-			if (response.success) {
-				const newOrder = {
-					...response.data,
-					items: response.data.items || []
-				};
-				setOrders((prev) => [newOrder, ...prev]);
-				return newOrder;
-			}
-			throw new Error(response.message || "Failed to create order");
-		} catch (error) {
-			console.error("Failed to create order:", error);
-			throw error;
-		}
-	};
+        try {
+          setLoading(true);
 
-	const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
-		try {
-			console.log(`Updating order ${orderId} to status: ${status}`);
-			const response = await ordersApi.updateStatus(orderId, status);
-			console.log('Update response:', response);
-			if (response.success) {
-				setOrders((prev) =>
-					prev.map((order) =>
-						order.id === orderId
-							? { ...order, status, updatedAt: new Date() }
-							: order
-					)
-				);
-				console.log('Order status updated successfully');
-			} else {
-				console.error('Failed to update order:', response.message);
-			}
-		} catch (error) {
-			console.error("Failed to update order:", error);
-			throw error;
-		}
-	};
+          const response =
+            await ordersService.getByUserId(
+              user.userId,
+              pageNumber
+            );
 
-	const cancelOrder = async (orderId: string) => {
-		console.log('Cancel order called for:', orderId);
-		try {
-			await updateOrderStatus(orderId, "canceled");
-		} catch (error) {
-			console.error('Cancel order error:', error);
-		}
-	};
+          const paginatedOrders = response.data;
 
-	const deleteOrder = async (orderId: string) => {
-		try {
-			const response = await ordersApi.delete(orderId);
-			if (response.success) {
-				setOrders((prev) => prev.filter((order) => order.id !== orderId));
-			}
-		} catch (error) {
-			console.error("Failed to delete order:", error);
-			throw error;
-		}
-	};
+          setOrders(
+            paginatedOrders.data
+          );
 
-	const getOrderById = (orderId: string) => {
-		return orders.find((order) => order.id === orderId);
-	};
+          setPage(
+            paginatedOrders.page
+          );
 
-	return (
-		<OrderContext.Provider
-			value={{
-				orders,
-				currentOrderItems,
-				currentOrderTotal,
-				loading,
-				checkout,
-				addOrder,
-				updateOrderStatus,
-				cancelOrder,
-				deleteOrder,
-				getOrderById,
-				refreshOrders,
-			}}
-		>
-			{children}
-		</OrderContext.Provider>
-	);
+          setTotalPages(
+            paginatedOrders.totalPages
+          );
+
+        } catch (
+        error
+        ) {
+          console.error(
+            "Failed to fetch orders",
+            error
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        user?.userId,
+        page
+      ]
+    );
+
+    const refreshAllOrders = useCallback(
+  async (pageNumber = page) => {
+    try {
+      setLoading(true);
+
+      const response = await ordersService.getAll(pageNumber);
+
+      const result = response.data;
+
+      setOrders(result.data);
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+    } finally {
+      setLoading(false);
+    }
+  },
+  [page]
+);
+
+  const checkout =
+    useCallback(
+      async (
+        paymentMethod: string
+      ) => {
+        if (!user?.userId) {
+          throw new Error(
+            "User not authenticated"
+          );
+        }
+
+        try {
+          setLoading(true);
+
+          const response =
+            await ordersService.checkout(
+              user.userId,
+              paymentMethod
+            );
+
+          const order =
+            response.data;
+
+          // console.log("Order created:", order);
+
+          setOrders((prev) => [
+            order,
+            ...prev,
+          ]);
+
+          await refreshCart();
+
+          return order;
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        user?.userId,
+        refreshCart,
+      ]
+    );
+
+  const updateOrderStatus =
+    useCallback(
+      async (
+        orderId: string,
+        status: OrderStatus
+      ) => {
+        await ordersService.updateStatus(
+          orderId,
+          status
+        );
+
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.orderId === orderId
+              ? {
+                ...order,
+                status,
+              }
+              : order
+          )
+        );
+      },
+      []
+    );
+
+  const cancelOrder =
+    useCallback(
+      async (
+        orderId: string
+      ) => {
+        await updateOrderStatus(
+          orderId,
+          "CANCELLED"
+        );
+      },
+      [
+        updateOrderStatus,
+      ]
+    );
+
+  const deleteOrder =
+    useCallback(
+      async (
+        orderId: string
+      ) => {
+        await ordersService.delete(
+          orderId
+        );
+
+        setOrders((prev) =>
+          prev.filter(
+            (order) =>
+              order.orderId !==
+              orderId
+          )
+        );
+      },
+      []
+    );
+
+  const getOrderById =
+    useCallback(
+      (
+        orderId: string
+      ) =>
+        orders.find(
+          (order) =>
+            order.orderId ===
+            orderId
+        ),
+      [orders]
+    );
+
+  const value = useMemo(
+    () => ({
+      orders,
+      page,
+      totalPages,
+      loading,
+
+      currentOrderItems,
+      currentOrderTotal,
+
+      checkout,
+      updateOrderStatus,
+      cancelOrder,
+      deleteOrder,
+      getOrderById,
+      refreshOrders,
+      refreshAllOrders
+    }),
+    [
+      orders,
+      loading,
+      currentOrderItems,
+      currentOrderTotal,
+      checkout,
+      updateOrderStatus,
+      cancelOrder,
+      deleteOrder,
+      getOrderById,
+      refreshOrders,
+      refreshAllOrders
+    ]
+  );
+
+  return (
+    <OrderContext.Provider
+      value={value}
+    >
+      {children}
+    </OrderContext.Provider>
+  );
 }
 
 export function useOrder() {
-	const context = useContext(OrderContext);
-	if (!context) {
-		throw new Error("useOrder must be used within OrderProvider");
-	}
-	return context;
+  const context =
+    useContext(OrderContext);
+
+  if (!context) {
+    throw new Error(
+      "useOrder must be used within OrderProvider"
+    );
+  }
+
+  return context;
 }
