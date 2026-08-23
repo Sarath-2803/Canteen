@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import { CartProvider } from "@/contexts/CartContext";
 import { OrderProvider } from "@/contexts/OrderContext";
 import { PaymentProvider } from "@/contexts/PaymentContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 import { Toaster } from "sonner";
-
-const geist = Geist({ subsets: ["latin"] });
-// const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Nosh & go",
@@ -22,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={geist.className}>
+      <body className="font-sans antialiased">
         <AuthProvider>
           <CartProvider>
             <OrderProvider>

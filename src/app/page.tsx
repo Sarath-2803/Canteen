@@ -480,21 +480,21 @@ export default function Home() {
 
 							<div>
 
-								<h3 className="font-semibold text-gray-900">
-									Company
-								</h3>
 
 								<div className="mt-3 space-y-2 text-gray-500">
 
-									<p>About</p>
-									<p>Contact</p>
-									<p>Support</p>
+									<a href="/about" className="block transition hover:text-green-600">
+										About us
+									</a>
+									<a href="/contact" className="block transition hover:text-green-600">
+										Contact
+									</a>
 
 								</div>
 
 							</div>
 
-							<div>
+							{/* <div>
 
 								<h3 className="font-semibold text-gray-900">
 									Legal
@@ -508,11 +508,11 @@ export default function Home() {
 
 								</div>
 
-							</div>
+							</div> */}
 
 						</div>
 
-					</div>
+					</div> 
 
 					<div className="mt-10 border-t pt-6 text-center text-sm text-gray-500">
 
