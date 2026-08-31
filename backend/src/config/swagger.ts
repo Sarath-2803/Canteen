@@ -1,4 +1,9 @@
 import swaggerJSDoc from 'swagger-jsdoc';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(currentDir, '..', '..');
 
 const swaggerDefinition = {
   openapi: '3.0.0',
@@ -190,15 +195,8 @@ const swaggerDefinition = {
 const options = {
   swaggerDefinition,
   apis: [
-    './src/modules/*/routes.ts',
-    './src/modules/user/*.ts',
-    './src/modules/item/*.ts',
-    './src/modules/category/*.ts',
-    './src/modules/cart/*.ts',
-    './src/modules/cartItem/*.ts',
-    './src/modules/order/*.ts',
-    './src/modules/orderItem/*.ts',
-    './src/modules/payment/*.ts',
+    path.resolve(projectRoot, 'src/modules/**/*.ts'),
+    path.resolve(projectRoot, 'dist/modules/**/*.js'),
   ],
 };
 

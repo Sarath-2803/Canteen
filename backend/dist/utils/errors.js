@@ -1,0 +1,61 @@
+/**
+ * Base class for custom errors
+ */
+export class AppError extends Error {
+    constructor(message, statusCode) {
+        super(message);
+        this.statusCode = statusCode;
+        this.isOperational = true;
+        // Maintains proper stack trace
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+/**
+ * 404 Not Found Error
+ */
+export class NotFoundError extends AppError {
+    constructor(message = 'Resource not found') {
+        super(message, 404);
+    }
+}
+/**
+ * 400 Bad Request / Validation Error
+ */
+export class ValidationError extends AppError {
+    constructor(message = 'Validation failed') {
+        super(message, 400);
+    }
+}
+/**
+ * 401 Unauthorized Error
+ */
+export class UnauthorizedError extends AppError {
+    constructor(message = 'Unauthorized') {
+        super(message, 401);
+    }
+}
+/**
+ * 403 Forbidden Error
+ */
+export class ForbiddenError extends AppError {
+    constructor(message = 'Forbidden') {
+        super(message, 403);
+    }
+}
+/**
+ * 409 Conflict Error (e.g., duplicate email)
+ */
+export class ConflictError extends AppError {
+    constructor(message = 'Resource already exists') {
+        super(message, 409);
+    }
+}
+/**
+ * 429 Too Many Requests Error
+ */
+export class TooManyRequestsError extends AppError {
+    constructor(message = 'Too many requests, please try again later') {
+        super(message, 429);
+    }
+}
+//# sourceMappingURL=errors.js.map
